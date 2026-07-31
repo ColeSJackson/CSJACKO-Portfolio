@@ -1,0 +1,35 @@
+---
+/**
+ * Design. Reached from the word DESIGN in the hero.
+ *
+ * The only section that groups: paid social, email and print are different
+ * crafts and a hiring manager is usually looking for one of them specifically.
+ * Groups with no entries do not render, so print appears by itself once a print
+ * piece exists.
+ */
+
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import ContactFooter from '../components/ContactFooter.astro';
+
+const entries = await getCollection(
+  'work',
+  ({ data }) => !data.draft && data.section === 'design',
+);
+---
+
+<Base
+  title="Design / Cole SJ"
+  description="Paid social creative, email campaign design and print marketing across nine powersports brands."
+  ground="corner"
+>
+  <Section
+    title="Design"
+    entries={entries}
+    unit="campaigns"
+    grouped
+    intro="Paid social creative, email campaign design and print."
+  />
+  <ContactFooter />
+</Base>

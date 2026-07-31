@@ -1,0 +1,426 @@
+---
+/**
+ * The scorecard. Featured work as rounds on a judge's card.
+ *
+ * This is the one interaction on the site. A row expands in place to reveal the
+ * statement, the tale of the tape and two media blocks. It does the hard job in
+ * the brief: an email campaign and a ringside photo essay occupy identical
+ * rows, so the range reads in about two seconds.
+ *
+ * Keyboard: the rows are real <button>s inside a list, so Tab reaches them and
+ * Enter or Space opens them. Up and Down move between rows once you are inside
+ * the card. Enter on the open row's link goes to the full case study.
+ */
+
+import type { CollectionEntry } from 'astro:content';
+import { DISCIPLINE_LABEL, CONTEXT_LABEL } from '../content.config';
+import StatStrip from './StatStrip.astro';
+import Figure from './Figure.astro';
+
+interface Props {
+  entries: CollectionEntry<'work'>[];
+}
+
+const { entries } = Astro.props;
+---
+
+<section class="card room" id="featured" aria-labelledby="featured-heading">
+  <header class="card__head">
+    <h2 id="featured-heading" class="label">Featured</h2>
+    <p class="label card__count">{entries.length} rounds</p>
+  </header>
+
+  <ul class="card__rows" data-scorecard>
+    {
+      entries.map((entry, i) => {
+        const d = entry.data;
+        const round = String(d.round ?? i + 1).padStart(2, '0');
+        const panelId = `round-panel-${entry.id}`;
+
+        return (
+          <li class="row" data-row>
+            <h3 class="row__h">
+              <button
+                type="button"
+                class="row__trigger"
+                aria-expanded={i === 0 ? 'true' : 'false'}
+                aria-controls={panelId}
+                data-trigger
+              >
+                <span class="row__round label">{round}</span>
+                <span class="row__discipline label">
+                  {DISCIPLINE_LABEL[d.discipline]}
+                </span>
+                <span class="row__body">
+                  <span class="row__title">{d.title}</span>
+                  <span class="row__summary">{d.summary}</span>
+                </span>
+                <span class="row__client label">{d.client}</span>
+                <span class="row__context label">{CONTEXT_LABEL[d.context]}</span>
+                <span class="row__mark" aria-hidden="true" />
+              </button>
+            </h3>
+
+            {/* Round one ships open. Rendering it open rather than opening it
+                after hydration means it works with JS off and there is no jump
+                once the script lands. */}
+            <div
+              class="row__panel"
+              id={panelId}
+              data-panel
+              data-open={i === 0 ? '' : undefined}
+              hidden={i !== 0}
+            >
+              <div class="row__panel-inner">
+                <div class="row__grid">
+                  <div class="row__copy">
+                    <p class="row__statement text-balance">{d.statement}</p>
+                    <p class="row__outcome text-pretty">{d.outcome}</p>
+
+                    <StatStrip
+                      stats={d.stats}
+                      publicResults={d.publicResults}
+                      tone="light"
+                    />
+
+                    <a class="row__link" href={`/work/${entry.id}`}>
+                      <span class="pill">Full case study</span>
+                    </a>
+                  </div>
+
+                  <div class="row__media">
+                    {d.media
+                      .flatMap((block) => block.assets)
+                      .slice(0, 2)
+                      .map((asset) => (
+                        <Figure
+                          asset={asset}
+                          placeholder={d.placeholder}
+                          sizes="(min-width: 900px) 22vw, 45vw"
+                        />
+                      ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+        );
+      })
+    }
+  </ul>
+</section>
+
+<style>
+  .card__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    color: var(--color-bone);
+    opacity: 0.55;
+  }
+
+  .card__head h2,
+  .card__count {
+    margin: 0;
+  }
+
+  .card__rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-block-start: 1px solid color-mix(in srgb, var(--color-bone) 28%, transparent);
+  }
+
+  .row {
+    border-block-end: 1px solid color-mix(in srgb, var(--color-bone) 18%, transparent);
+  }
+
+  .row__h {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  .row__trigger {
+    display: grid;
+    grid-template-columns: 3.5rem 8rem 1fr auto auto 1.5rem;
+    align-items: baseline;
+    gap: 1rem;
+    width: 100%;
+    padding: 1.15rem 0.25rem;
+    background: none;
+    border: 0;
+    color: var(--color-bone);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    transition: color 200ms var(--ease-settle);
+  }
+
+  .row__trigger:hover {
+    color: var(--color-flare);
+  }
+
+  .row__round {
+    color: var(--color-flare);
+  }
+
+  .row__discipline,
+  .row__client,
+  .row__context {
+    opacity: 0.8;
+  }
+
+  /* Title and summary share the flexible column, so a closed row still shows
+     what the piece actually was. Without this, rounds 02 to 04 read as empty
+     placeholders rather than as closed. */
+  .row__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  .row__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+  }
+
+  .row__summary {
+    font-size: var(--text-step--1);
+    line-height: 1.35;
+    opacity: 0.7;
+    max-width: 52ch;
+  }
+
+  /* Round indicator. Fills when the row is open. */
+  .row__mark {
+    justify-self: end;
+    align-self: center;
+    width: 0.85rem;
+    height: 0.85rem;
+    border: 2px solid currentColor;
+    border-radius: 999px;
+    transition: background-color 200ms var(--ease-settle);
+  }
+
+  [aria-expanded='true'] .row__mark {
+    background-color: var(--color-flare);
+  }
+
+  [aria-expanded='true'] {
+    color: var(--color-bone);
+  }
+
+  [aria-expanded='true'] .row__title {
+    color: var(--color-flare);
+  }
+
+  /* Grid-rows trick: animates to auto height without measuring in JS. */
+  .row__panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 420ms var(--ease-settle);
+  }
+
+  /* The hidden attribute carries the semantics; the visual collapse is done by
+     grid-template-rows so it can animate. Restoring the grid display the UA
+     stylesheet would strip keeps those two jobs separate. */
+  .row__panel[hidden] {
+    display: grid;
+  }
+
+  .row__panel[data-open] {
+    grid-template-rows: 1fr;
+  }
+
+  .row__panel-inner {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .row__panel > * > * {
+    /* Content fades slightly behind the row opening so it does not appear
+       squashed mid-transition. */
+    opacity: 0;
+    transition: opacity 260ms var(--ease-settle) 120ms;
+  }
+
+  .row__panel[data-open] > * > * {
+    opacity: 1;
+  }
+
+  .row__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(1rem, 3vw, 2.5rem);
+    padding: 0.5rem 0 2rem;
+  }
+
+  .row__copy {
+    color: var(--color-bone);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.1rem;
+    max-width: 46ch;
+  }
+
+  .row__statement {
+    font-family: var(--font-display);
+    font-size: var(--text-step-1);
+    line-height: 1.15;
+    margin: 0;
+  }
+
+  .row__outcome {
+    margin: 0;
+    font-size: var(--text-step-0);
+    opacity: 0.85;
+  }
+
+  .row__link {
+    color: var(--color-bone);
+    text-decoration: none;
+  }
+
+  .row__link:hover .pill {
+    background-color: var(--color-flare);
+    border-color: var(--color-flare);
+    color: var(--color-bone);
+  }
+
+  .row__media {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    align-content: start;
+  }
+
+  /* Assets in a row are cropped to a common ratio. Without this a portrait
+     frame drags the open panel to well over a thousand pixels tall and the
+     card stops feeling like a card. Uncropped images are the case study's
+     job, not the scorecard's. */
+  .row__media :global(img) {
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 860px) {
+    .row__trigger {
+      grid-template-columns: 2.5rem 1fr 1.25rem;
+      grid-template-areas:
+        'round title mark'
+        'round meta  mark';
+      row-gap: 0.4rem;
+    }
+
+    .row__round {
+      grid-area: round;
+    }
+
+    .row__body {
+      grid-area: title;
+    }
+
+    .row__title {
+      font-size: var(--text-step-1);
+    }
+
+    .row__discipline {
+      grid-area: meta;
+    }
+
+    .row__client,
+    .row__context {
+      display: none;
+    }
+
+    .row__mark {
+      grid-area: mark;
+    }
+
+    .row__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script>
+  /**
+   * One open row at a time. The card behaves like a set of disclosure buttons,
+   * which is what it visually is, so no ARIA beyond expanded/controls is
+   * needed.
+   */
+  function init() {
+    const cards = document.querySelectorAll<HTMLElement>('[data-scorecard]');
+
+    cards.forEach((card) => {
+      const triggers = Array.from(
+        card.querySelectorAll<HTMLButtonElement>('[data-trigger]'),
+      );
+
+      function setOpen(trigger: HTMLButtonElement, open: boolean) {
+        const panel = trigger
+          .closest('[data-row]')!
+          .querySelector<HTMLElement>('[data-panel]')!;
+
+        trigger.setAttribute('aria-expanded', String(open));
+
+        if (open) {
+          panel.hidden = false;
+          /* hidden must be dropped and a layout forced before the grid rows
+             transition has a start value to animate from. A rAF would do the
+             same job but never fires in a background tab, which would leave the
+             first round permanently shut. */
+          void panel.offsetHeight;
+          panel.setAttribute('data-open', '');
+        } else {
+          panel.removeAttribute('data-open');
+          const done = () => {
+            if (trigger.getAttribute('aria-expanded') === 'false') {
+              panel.hidden = true;
+            }
+            panel.removeEventListener('transitionend', done);
+          };
+          panel.addEventListener('transitionend', done);
+        }
+      }
+
+      triggers.forEach((trigger, i) => {
+        trigger.addEventListener('click', () => {
+          const isOpen = trigger.getAttribute('aria-expanded') === 'true';
+          triggers.forEach((t) => t !== trigger && setOpen(t, false));
+          setOpen(trigger, !isOpen);
+        });
+
+        trigger.addEventListener('keydown', (event) => {
+          const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
+          if (!keys.includes(event.key)) return;
+          event.preventDefault();
+
+          const next =
+            event.key === 'ArrowDown'
+              ? (i + 1) % triggers.length
+              : event.key === 'ArrowUp'
+                ? (i - 1 + triggers.length) % triggers.length
+                : event.key === 'Home'
+                  ? 0
+                  : triggers.length - 1;
+
+          triggers[next].focus();
+        });
+      });
+    });
+  }
+
+  init();
+  document.addEventListener('astro:after-swap', init);
+</script>

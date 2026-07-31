@@ -1,0 +1,23 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import Scorecard from '../components/Scorecard.astro';
+import ContactFooter from '../components/ContactFooter.astro';
+
+/* Featured only. The full index lives at /work: a hiring manager should get
+   the range from this page in one screen, and the volume only if they go
+   looking for it. */
+const featured = (await getCollection('work', ({ data }) => !data.draft))
+  .filter((entry) => entry.data.featured)
+  .sort((a, b) => (a.data.round ?? 99) - (b.data.round ?? 99));
+---
+
+<Base
+  title="Cole SJ / Content and Digital Marketing"
+  description="Cole SJ. Content and digital marketing across nine powersports brands. Combat sports photography and video as CSJACKO."
+>
+  <Hero />
+  <Scorecard entries={featured} />
+  <ContactFooter />
+</Base>

@@ -1,0 +1,283 @@
+---
+import Base from '../layouts/Base.astro';
+import ContactFooter from '../components/ContactFooter.astro';
+
+/* Kit list. Placeholder until Cole confirms the real bodies and glass. */
+const KIT = [
+  { group: 'Bodies', items: ['TKTK', 'TKTK'] },
+  { group: 'Glass', items: ['TKTK', 'TKTK', 'TKTK'] },
+  { group: 'Light', items: ['TKTK', 'TKTK'] },
+  { group: 'Post', items: ['Lightroom', 'Premiere Pro', 'After Effects', 'Figma'] },
+  { group: 'Marketing', items: ['Klaviyo TKTK', 'Meta Ads Manager', 'GA4', 'TKTK'] },
+];
+
+const HOW = [
+  {
+    statement: 'I shoot it, cut it, design it and run it.',
+    detail:
+      'The reason the marketing works is that I do not have to brief the creative out. The reason the creative works is that I know what it has to do commercially.',
+  },
+  {
+    statement: 'I build things that keep running after I stop touching them.',
+    detail:
+      'Templates, flows and calendars, not one-off assets. The winter reactivation flow runs itself every year now.',
+  },
+  {
+    statement: 'I go and make the work rather than waiting for the brief.',
+    detail:
+      'CSJACKO exists because nobody asked me to shoot fights. The in-house studio at Motohaus exists because nobody asked me to build one.',
+  },
+];
+---
+
+<Base
+  title="About / Cole SJ"
+  description="Cole SJ. Content and Digital Marketing Executive at Motohaus Powersports. Combat sports photographer as CSJACKO."
+  ground="bone"
+>
+  <article class="ab">
+    <nav class="ab__back">
+      <a href="/" class="pill">Back</a>
+    </nav>
+
+    <header class="ab__head">
+      <h1 class="ab__title warp-sm">About</h1>
+      <p class="ab__lede text-balance">
+        Content and Digital Marketing Executive at Motohaus Powersports, a
+        nine-brand powersports distributor. I run content and digital across the
+        portfolio, including SW-MOTECH, KEIS Apparel and NEXX Helmets UK.
+        Promoted twice in under two years.
+      </p>
+      <p class="ab__lede-sub text-pretty">
+        Outside of that I run CSJACKO, shooting combat sports. Boxing and Muay
+        Thai, including work for British Army Boxing, and a British Army Muay
+        Thai championship. Fitness and athletic content is what I actually care
+        about. The day job is where the commercial skillset came from.
+      </p>
+    </header>
+
+    <section class="ab__how" aria-labelledby="how-heading">
+      <h2 id="how-heading" class="label ab__section-label">How I work</h2>
+      <div class="ab__how-list">
+        {
+          HOW.map((item) => (
+            <div class="ab__how-item">
+              <h3 class="ab__how-statement text-balance">{item.statement}</h3>
+              <p class="ab__how-detail text-pretty">{item.detail}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="ab__kit" aria-labelledby="kit-heading">
+      <h2 id="kit-heading" class="label ab__section-label">Kit</h2>
+      <dl class="ab__kit-list">
+        {
+          KIT.map((group) => (
+            <div class="ab__kit-group">
+              <dt class="label">{group.group}</dt>
+              <dd>{group.items.join(', ')}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <p class="label ab__kit-note">Placeholder. TKTK values to be filled in.</p>
+    </section>
+  </article>
+
+  <ContactFooter />
+</Base>
+
+<style>
+  /* ------------------------------------------------------------------
+     The about ground.
+
+     A blown-out near-white surface with harsh black horizontal striation
+     scratched across it and dark masses bleeding through. Wood grain pushed to
+     a threshold until only black and white survive, which is what gives the
+     reference its printed, photocopied quality.
+
+     Generated, not photographed. feTurbulence with a deliberately lopsided
+     baseFrequency (very low on X, high on Y) stretches the noise into long
+     horizontal streaks; forcing the alpha through a steep transfer with a
+     heavily negative intercept means only the extreme peaks clear zero, so what
+     survives is sparse scratches rather than a solid field.
+
+     Then it is masked. The reference is an image with nothing to read; this is
+     a page with body copy on it, and at full strength the striation makes that
+     copy genuinely unreadable. The mask builds the texture up towards the right
+     and the edges, so it frames the column rather than sitting under it. That
+     is a deliberate departure from the reference, and the reason for it.
+     ------------------------------------------------------------------ */
+  .ab {
+    position: relative;
+    isolation: isolate;
+    color: var(--color-ink);
+    background-color: #f4f2ee;
+    padding-inline: var(--spacing-gutter);
+    padding-block: clamp(2.5rem, 8vh, 5rem) var(--spacing-room);
+  }
+
+  /* Dark masses, weighted away from the reading column. */
+  .ab::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background-image:
+      radial-gradient(
+        42% 52% at 88% 24%,
+        rgba(8, 8, 10, 0.85) 0%,
+        rgba(8, 8, 10, 0.4) 44%,
+        transparent 76%
+      ),
+      radial-gradient(
+        34% 40% at 70% 82%,
+        rgba(8, 8, 10, 0.55) 0%,
+        rgba(8, 8, 10, 0.22) 48%,
+        transparent 78%
+      );
+  }
+
+  .ab::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%271600%27%20height%3D%271000%27%3E%3Cfilter%20id%3D%27s%27%20x%3D%270%27%20y%3D%270%27%20width%3D%27100%25%27%20height%3D%27100%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.0022%200.5%27%20numOctaves%3D%275%27%20seed%3D%277%27%20result%3D%27t%27%2F%3E%3CfeColorMatrix%20in%3D%27t%27%20type%3D%27matrix%27%20values%3D%270%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%201%200%200%200%200%27%2F%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type%3D%27linear%27%20slope%3D%2722%27%20intercept%3D%27-15.5%27%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3Crect%20width%3D%271600%27%20height%3D%271000%27%20filter%3D%27url%28%23s%29%27%2F%3E%3C%2Fsvg%3E");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+
+    /* Builds towards the right and the top and bottom edges, leaving the
+       reading column comparatively clean. */
+    -webkit-mask-image:
+      linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.18) 34%, rgba(0, 0, 0, 0.75) 62%, #000 100%),
+      linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.45) 26%, rgba(0, 0, 0, 0.45) 74%, #000 100%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.18) 34%, rgba(0, 0, 0, 0.75) 62%, #000 100%),
+      linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.45) 26%, rgba(0, 0, 0, 0.45) 74%, #000 100%);
+    mask-composite: intersect;
+  }
+
+  @media (max-width: 860px) {
+    /* On a phone the column fills the width, so there is nowhere for the
+       texture to live without landing on the copy. Keep it at the edges. */
+    .ab::after {
+      opacity: 0.55;
+    }
+  }
+
+  .ab__back {
+    margin-bottom: clamp(2rem, 8vh, 5rem);
+  }
+
+  .ab__back a {
+    color: inherit;
+    text-decoration: none;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .ab__back a:hover {
+    background-color: var(--color-ink);
+    color: var(--color-bone);
+  }
+
+  .ab__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-4);
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    margin: 0 0 clamp(1.5rem, 4vh, 2.5rem);
+  }
+
+  .ab__lede {
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1.15;
+    margin: 0 0 1.25rem;
+    max-width: 30ch;
+  }
+
+  .ab__lede-sub {
+    margin: 0;
+    max-width: 56ch;
+    font-size: var(--text-step-1);
+    opacity: 0.85;
+  }
+
+  .ab__section-label {
+    opacity: 0.6;
+    margin: 0 0 1.5rem;
+    padding-block-end: 0.75rem;
+    border-block-end: 2px solid currentColor;
+  }
+
+  .ab__how,
+  .ab__kit {
+    margin-top: var(--spacing-room);
+  }
+
+  .ab__how-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .ab__how-statement {
+    font-family: var(--font-display);
+    font-size: var(--text-step-1);
+    line-height: 1.1;
+    margin: 0 0 0.75rem;
+  }
+
+  .ab__how-detail {
+    margin: 0;
+    font-size: var(--text-step-0);
+    opacity: 0.8;
+  }
+
+  .ab__kit-list {
+    margin: 0;
+    display: grid;
+    gap: 0;
+  }
+
+  .ab__kit-group {
+    display: grid;
+    grid-template-columns: 10rem minmax(0, 1fr);
+    gap: 1rem;
+    padding-block: 0.85rem;
+    border-block-end: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  }
+
+  .ab__kit-group dt {
+    opacity: 0.6;
+  }
+
+  .ab__kit-group dd {
+    margin: 0;
+  }
+
+  .ab__kit-note {
+    margin: 1.25rem 0 0;
+    color: var(--color-flare);
+  }
+
+  @media (max-width: 860px) {
+    .ab__how-list {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ab__kit-group {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.35rem;
+    }
+  }
+</style>

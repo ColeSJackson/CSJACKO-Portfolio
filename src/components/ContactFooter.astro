@@ -1,0 +1,192 @@
+---
+/**
+ * Contact as an event rather than a link.
+ *
+ * The panel is full height and its lockup is solved to the same measure as the
+ * hero, so arriving at the bottom of the page lands a second typographic
+ * moment that rhymes with the first. No form: hiring managers email.
+ */
+
+import { SITE } from '../config';
+
+const LINES = [{ text: 'GET IN' }, { text: 'TOUCH' }] as const;
+---
+
+<footer class="contact" id="contact">
+  <div class="contact__stack" data-fit-group>
+    {
+      LINES.map((line, i) => (
+        <p
+          class="lockup bloom warp contact__line"
+          data-fit
+          style={`--i:${i}`}
+        >
+          {line.text}
+        </p>
+      ))
+    }
+  </div>
+
+  <div class="contact__body">
+    <dl class="contact__links">
+      <div>
+        <dt class="label">Email</dt>
+        <dd>
+          <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+        </dd>
+      </div>
+      <div>
+        <dt class="label">LinkedIn</dt>
+        <dd>
+          <a href={SITE.linkedin} target="_blank" rel="noopener">
+            {SITE.name}
+          </a>
+        </dd>
+      </div>
+      <div>
+        <dt class="label">CV</dt>
+        <dd>
+          <a href={SITE.cv} download>
+            Download PDF
+          </a>
+        </dd>
+      </div>
+    </dl>
+
+    <div class="contact__looking">
+      <p class="label contact__looking-label">What I am looking for</p>
+      <p class="contact__looking-copy text-pretty">{SITE.lookingFor}</p>
+      <p class="label contact__location">{SITE.location}</p>
+    </div>
+  </div>
+
+  {/* The full cross-section archive lives here rather than in the main nav:
+      it is depth for anyone who wants it, not a primary destination. */}
+  <p class="contact__legal label">
+    <span>{SITE.name}</span>
+    <span>{SITE.brand}</span>
+    <a class="contact__archive" href="/work">Full index</a>
+    <span>&copy; {new Date().getFullYear()}</span>
+  </p>
+</footer>
+
+<style>
+  .contact {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: clamp(2rem, 6vh, 4rem);
+    padding: var(--spacing-gutter);
+    padding-block-start: clamp(3rem, 12vh, 8rem);
+    color: var(--color-bone);
+  }
+
+  .contact__stack {
+    width: 100%;
+  }
+
+  .contact__line {
+    /* Shrink-to-fit is load-bearing: the solver measures offsetWidth. */
+    width: max-content;
+    font-size: calc(clamp(3rem, 20vw, 17rem) * var(--fit-scale, 1));
+    white-space: nowrap;
+    line-height: 0.84;
+    color: var(--color-flare);
+  }
+
+  .contact__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 5vw, 4rem);
+    align-items: start;
+    padding-block: clamp(1rem, 4vh, 2.5rem);
+    border-block-start: 1px solid color-mix(in srgb, var(--color-bone) 28%, transparent);
+  }
+
+  .contact__links {
+    display: grid;
+    gap: 1.1rem;
+    margin: 0;
+  }
+
+  .contact__links dt {
+    opacity: 0.7;
+    margin-bottom: 0.25rem;
+  }
+
+  .contact__links dd {
+    margin: 0;
+  }
+
+  .contact__links a {
+    /* Text face: an email address is something you read character by character,
+       which is the one job the display face is worst at. */
+    font-family: var(--font-utility);
+    font-size: var(--text-step-1);
+    line-height: 1.1;
+    color: var(--color-bone);
+    text-decoration: none;
+    border-block-end: 2px solid transparent;
+    transition:
+      border-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+    word-break: break-word;
+  }
+
+  .contact__links a:hover {
+    color: var(--color-flare);
+    border-block-end-color: var(--color-flare);
+  }
+
+  .contact__looking-label {
+    opacity: 0.7;
+    margin: 0 0 0.5rem;
+  }
+
+  .contact__looking-copy {
+    margin: 0;
+    max-width: 38ch;
+    font-size: var(--text-step-0);
+  }
+
+  /* Sits in the utility register rather than as another sentence: it is a fact
+     a recruiter scans for, not something they read. */
+  .contact__location {
+    margin: 0.85rem 0 0;
+    max-width: 38ch;
+    opacity: 0.6;
+  }
+
+  .contact__legal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1.5rem;
+    margin: 0;
+    opacity: 0.6;
+  }
+
+  .contact__archive {
+    color: inherit;
+    text-decoration: none;
+    border-block-end: 1px solid currentColor;
+    transition: color 180ms var(--ease-settle);
+  }
+
+  .contact__archive:hover {
+    color: var(--color-flare);
+  }
+
+  @media (max-width: 720px) {
+    .contact__body {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script>
+  import { initFit } from '../scripts/fit-lines';
+
+  initFit();
+</script>

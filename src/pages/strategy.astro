@@ -1,0 +1,28 @@
+---
+/**
+ * Strategy. Reached from the word STRATEGY in the hero.
+ *
+ * This section evidences planning rather than visual craft, so it uses its own
+ * template: statement, stat callouts, then image evidence such as calendars and
+ * flow diagrams. It reads as a short case study rather than a gallery.
+ */
+
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import StrategyList from '../components/StrategyList.astro';
+import ContactFooter from '../components/ContactFooter.astro';
+
+const entries = await getCollection(
+  'work',
+  ({ data }) => !data.draft && data.section === 'strategy',
+);
+---
+
+<Base
+  title="Strategy / Cole SJ"
+  description="Content calendars, campaign planning and the brand channels I run day to day."
+  ground="corner"
+>
+  <StrategyList entries={entries} />
+  <ContactFooter />
+</Base>

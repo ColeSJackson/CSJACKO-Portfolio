@@ -1,0 +1,186 @@
+---
+/**
+ * Shared archive layout for the non-photography disciplines.
+ *
+ * Video, design and strategy all present the same way: a card per piece, media
+ * first, then the statement. Photography is the exception and has its own page,
+ * because a lightboxed masonry wall is a different job.
+ *
+ * Figure handles whichever asset type an entry happens to lead with, so a
+ * design entry showing an in-feed still and a video entry showing a silent
+ * loop use the same component.
+ */
+
+import type { CollectionEntry } from 'astro:content';
+import Figure from './Figure.astro';
+import { CONTEXT_LABEL } from '../content.config';
+
+interface Props {
+  title: string;
+  entries: CollectionEntry<'work'>[];
+  /** Noun for the count in the header, e.g. "pieces", "campaigns". */
+  unit?: string;
+}
+
+const { title, entries, unit = 'pieces' } = Astro.props;
+
+const sorted = [...entries].sort((a, b) => b.data.year - a.data.year);
+---
+
+<section class="ar">
+  <header class="ar__head">
+    <a href="/" class="pill">Back</a>
+    <h1 class="ar__title bloom warp-sm">{title}</h1>
+    <p class="ar__count label">{sorted.length} {unit}</p>
+  </header>
+
+  <ul class="ar__list">
+    {
+      sorted.map((entry, i) => {
+        const d = entry.data;
+        /* Prefer a real media asset. Fall back to the cover so an entry with no
+           media blocks yet still renders as a finished card. */
+        const lead =
+          d.media.flatMap((block) => block.assets).find(Boolean) ?? {
+            type: 'image' as const,
+            src: d.cover,
+            alt: d.coverAlt,
+          };
+
+        return (
+          <li class="ar__item">
+            <a class="ar__link" href={`/work/${entry.id}`}>
+              <div class="ar__media">
+                <Figure
+                  asset={lead}
+                  eager={i === 0}
+                  placeholder={d.placeholder}
+                  sizes="(min-width: 900px) 48vw, 92vw"
+                />
+              </div>
+
+              <div class="ar__meta">
+                <h2 class="ar__name">{d.title}</h2>
+                <p class="ar__client label">
+                  <span>{d.client}</span>
+                  <span>{CONTEXT_LABEL[d.context]}</span>
+                  <span>{d.year}</span>
+                </p>
+                <p class="ar__statement text-pretty">{d.statement}</p>
+              </div>
+            </a>
+          </li>
+        );
+      })
+    }
+  </ul>
+</section>
+
+<style>
+  .ar {
+    background-color: var(--color-corner);
+    padding: var(--spacing-gutter);
+    padding-block-end: var(--spacing-room);
+  }
+
+  .ar__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem 1.5rem;
+    margin-bottom: clamp(2rem, 6vh, 4rem);
+  }
+
+  .ar__head a {
+    color: var(--color-bone);
+    text-decoration: none;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .ar__head a:hover {
+    background-color: var(--color-flare);
+    color: var(--color-bone);
+  }
+
+  .ar__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    color: var(--color-flare);
+    margin: 0;
+    margin-inline-end: auto;
+  }
+
+  .ar__count {
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  .ar__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .ar__link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ar__media {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ar__link:hover .ar__media {
+    outline: 2px solid var(--color-flare);
+    outline-offset: 3px;
+  }
+
+  .ar__meta {
+    padding-top: 1rem;
+  }
+
+  .ar__name {
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.6rem;
+    transition: color 200ms var(--ease-settle);
+  }
+
+  .ar__link:hover .ar__name {
+    color: var(--color-flare);
+  }
+
+  .ar__client {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    opacity: 0.55;
+    margin: 0 0 0.75rem;
+  }
+
+  .ar__statement {
+    margin: 0;
+    max-width: 44ch;
+    font-size: var(--text-step-0);
+    opacity: 0.8;
+  }
+
+  @media (max-width: 760px) {
+    .ar__list {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

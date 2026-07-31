@@ -1,0 +1,454 @@
+/* ---------------------------------------------------------------------------
+   CSJACKO global tokens and base layer.
+
+   Everything the site is allowed to look like is declared here. Components use
+   token classes (text-bone, font-display, text-step-4) and never arbitrary
+   values. If you find yourself typing a hex or a px in a component, add it here
+   instead.
+   --------------------------------------------------------------------------- */
+
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   The typefaces.
+
+   Groovy Madness sets the headings. Alte Haas Grotesk sets everything else.
+
+   Why the display family needs the text face at all: Groovy Madness has no
+   usable numerals. All ten digit codepoints are mapped, but every one points at
+   the same placeholder shape (identical advance of 877, identical bounds).
+   Because the codepoints *are* mapped, the browser's normal per-glyph fallback
+   never fires, so the range has to be carved out explicitly. A heading like
+   "2026" or "01" would otherwise render as four identical blocks.
+
+   THE WEIGHT RANGES ON THE TWO DISPLAY FACES MUST MATCH. Font matching selects
+   a face on weight *before* it applies unicode-range. If one advertised only
+   400 while the other advertised 400-700, an element asking for weight 500
+   would match the wrong face, find its characters outside that face's range,
+   and fall through to the system sans with Groovy never loading at all. Keeping
+   both at 400-700 leaves unicode-range as the only thing separating them, which
+   is the only thing that should.
+
+   size-adjust is measured, not guessed. Groovy's cap height is 0.691em and Alte
+   Haas's digits are 0.705em, so 98% puts them on the same optical line inside a
+   heading. The text face needs no adjustment at all: its cap height of 0.717em
+   is where the type scale was originally tuned, and its x-height ratio of 0.73
+   is a normal text proportion, so lowercase lands at a sensible size on its own.
+   --------------------------------------------------------------------------- */
+
+/* Display: headings and anything large. */
+@font-face {
+  font-family: 'CSJACKO Display';
+  src: url('../assets/fonts/groovy-madness.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  /* Everything except U+0030-0039. */
+  unicode-range: U+0000-002F, U+003A-10FFFF;
+}
+
+/* Display numerals, borrowed from the text face. Bold, because these sit
+   directly beside Groovy Madness's very heavy letterforms and the regular cut
+   reads thin against them. */
+@font-face {
+  font-family: 'CSJACKO Display';
+  src: url('../assets/fonts/alte-haas-bold.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 98%;
+  /* Digits only. */
+  unicode-range: U+0030-0039;
+}
+
+/* Text: body copy, utility labels, data.
+
+   Bold is the site default, set on body. Both cuts stay declared with honest
+   weights rather than relabelling the bold as 400, so anything that wants the
+   lighter cut can still ask for font-weight 400 and get a real regular instead
+   of a fake one. In practice nothing does, so alte-haas.woff2 is never
+   fetched. */
+@font-face {
+  font-family: 'CSJACKO Text';
+  src: url('../assets/fonts/alte-haas.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'CSJACKO Text';
+  src: url('../assets/fonts/alte-haas-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  /* -- Palette ------------------------------------------------------------
+     Black ground, one hot red, one off-white. That is the whole system.
+
+     Red is the only saturated thing on the site, so it is never used for
+     "an accent here and there": it carries the display type and the live
+     states and nothing else. The moment it appears in three places on one
+     screen it has stopped working. */
+  --color-ink: #0b0b0c; /* dominant ground, near-black, very slightly cool */
+  --color-flare: #e62317; /* the red. Display type and live states only. */
+  --color-bone: #efede8; /* off-white: body copy, utility caps, light room */
+  --color-corner: #111113; /* second ground: media rooms, one step off ink */
+  --color-tape: #efede8; /* focus rings. Bone reads on both ink and flare. */
+
+  /* Derived tints. Not new colours, and not to be used as fills. flare-deep is
+     the far stop of the background gradient; corner-lift is mirrored by the
+     placeholder generator so stand-in art sits in the same range as the rooms. */
+  --color-flare-deep: #a81409;
+  --color-corner-lift: #1b1b1e;
+
+  /* -- Type ----------------------------------------------------------------
+     Groovy Madness carries the headings, Alte Haas Grotesk carries everything you have to
+     actually read. Which token a component reaches for is therefore a real
+     decision: --font-display is for things that are meant to be looked at,
+     --font-body and --font-utility for things that are meant to be read. */
+  --font-display: 'CSJACKO Display', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'CSJACKO Text', ui-sans-serif, system-ui, sans-serif;
+  --font-utility: 'CSJACKO Text', ui-sans-serif, system-ui, sans-serif;
+
+  /* Fluid scale. step-0 is body copy; the display steps are deliberately
+     enormous because the references are enormous. */
+  --text-step--2: clamp(0.625rem, 0.6rem + 0.1vw, 0.6875rem);
+  --text-step--1: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
+  --text-step-0: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+  --text-step-1: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem);
+  --text-step-2: clamp(1.5rem, 1.3rem + 1vw, 2.25rem);
+  --text-step-3: clamp(2rem, 1.5rem + 2.5vw, 3.5rem);
+  --text-step-4: clamp(2.75rem, 1.5rem + 6vw, 6rem);
+  --text-hero: clamp(3.5rem, 1rem + 15vw, 15rem);
+
+  /* -- Rhythm -------------------------------------------------------------- */
+  --spacing-gutter: clamp(1.25rem, 4vw, 4rem);
+  --spacing-room: clamp(2.5rem, 7vw, 7rem);
+
+  /* -- Motion -------------------------------------------------------------
+     One curve for everything that settles: the width solve, hovers, the panel
+     opening. The drifting field runs on plain ease-in-out instead, because a
+     settle curve on a 60-second loop reads as a stutter. */
+  --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-settle: 900ms;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-ink);
+    color: var(--color-bone);
+    font-family: var(--font-body);
+    font-size: var(--text-step-0);
+    /* The bold cut is the site voice, not an emphasis. It holds up against the
+       grain and the display face far better than the regular does. */
+    font-weight: 700;
+    line-height: 1.6;
+    /* Never fake a weight. Alte Haas ships a real bold, and Groovy Madness has
+       no bold at all, so a synthesised one would only ever be a smeared
+       approximation of a weight that does not exist. */
+    font-synthesis: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  /* Film grain.
+
+     Screened on, because multiply against black is invisible. The trick to
+     getting heavy grain without hazing the blacks grey is the gamma transfer
+     inside the noise: it crushes the midtones so most of the tile is near
+     black (screening black changes nothing) and only the highlights survive as
+     bright specks. That gives punchy, sparse grain instead of a flat lift.
+
+     One fixed tile over the whole document, so it does not repaint on scroll
+     and costs nothing per section. */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: screen;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' exponent='2.8'/%3E%3CfeFuncG type='gamma' exponent='2.8'/%3E%3CfeFuncB type='gamma' exponent='2.8'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Photographs sit ABOVE the grain.
+
+     The texture belongs to the page surface, not to the work. Grain laid over a
+     photograph does not read as film, it reads as a low-quality JPEG, and it
+     actively undermines the thing the site exists to show.
+
+     The overlay is z-index 60, so anything given a higher index paints after it
+     and is therefore excluded from its backdrop, which is what mix-blend-mode
+     composites against. The modal lightbox needs no rule: a native <dialog>
+     renders in the browser's top layer, above every z-index on the page. */
+  .fig,
+  .ph__shot,
+  .cs__cover {
+    position: relative;
+    z-index: 61;
+  }
+
+  /* The filter defs carrier. Present in the DOM, occupies nothing. */
+  .filters {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  /* ---------------------------------------------------------------------
+     The living ground.
+
+     Three oversized red blooms drifting behind everything. The whole point is
+     that it never reads as a loop, so the three run at prime-ish durations
+     (41s, 59s, 67s) and never come back into phase within a session.
+
+     Only transform and opacity are animated, which the compositor can run on
+     its own thread. No blur filter: the softness comes from the gradient's own
+     colour stops, because a filter on an element this large is one of the most
+     expensive things you can ask a phone to repaint.
+     --------------------------------------------------------------------- */
+  .field {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background-color: var(--color-ink);
+  }
+
+  .field__blob {
+    position: absolute;
+    display: block;
+    width: 90vmax;
+    height: 90vmax;
+    border-radius: 50%;
+    will-change: transform;
+    background: radial-gradient(
+      circle at 50% 50%,
+      color-mix(in srgb, var(--color-flare) 42%, transparent) 0%,
+      color-mix(in srgb, var(--color-flare) 16%, transparent) 32%,
+      color-mix(in srgb, var(--color-flare-deep) 6%, transparent) 55%,
+      transparent 72%
+    );
+  }
+
+  .field__blob--a {
+    top: -35vmax;
+    left: -25vmax;
+    animation: drift-a 41s ease-in-out infinite alternate;
+  }
+
+  .field__blob--b {
+    bottom: -40vmax;
+    right: -30vmax;
+    opacity: 0.8;
+    animation: drift-b 59s ease-in-out infinite alternate;
+  }
+
+  .field__blob--c {
+    top: 25%;
+    left: 45%;
+    width: 60vmax;
+    height: 60vmax;
+    opacity: 0.55;
+    animation: drift-c 67s ease-in-out infinite alternate;
+  }
+
+  @keyframes drift-a {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(18vw, 12vh, 0) scale(1.18);
+    }
+    100% {
+      transform: translate3d(6vw, 30vh, 0) scale(0.92);
+    }
+  }
+
+  @keyframes drift-b {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1.05);
+    }
+    50% {
+      transform: translate3d(-22vw, -16vh, 0) scale(0.85);
+    }
+    100% {
+      transform: translate3d(-8vw, -34vh, 0) scale(1.2);
+    }
+  }
+
+  @keyframes drift-c {
+    0% {
+      transform: translate3d(0, 0, 0) scale(0.9);
+    }
+    50% {
+      transform: translate3d(-26vw, 20vh, 0) scale(1.25);
+    }
+    100% {
+      transform: translate3d(14vw, -18vh, 0) scale(0.8);
+    }
+  }
+
+  /* Focus is the brightest thing on the site. Bone rather than red, because the
+     ring has to read against the red type as well as against the black. */
+  :focus-visible {
+    outline: 3px solid var(--color-tape);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-tape);
+    color: var(--color-ink);
+  }
+
+  img,
+  video {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Reduced motion is honoured properly: transforms and axis animation are
+     removed, not merely shortened. Static end-states are already correct
+     because every animation animates *to* the resting value. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Components. The small number of repeated devices the folder actually uses.
+   --------------------------------------------------------------------------- */
+
+@layer components {
+  /* Tiny letterspaced caps in a pill. In the inspiration set this carries every
+     piece of metadata: scripture reference, category, tiny label. Here it
+     carries discipline, context and year. */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.3em 0.7em 0.25em;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-family: var(--font-utility);
+    font-size: var(--text-step--2);
+    /* Sentence case, and only a light track. Caps plus heavy tracking is a
+       utility register that belongs to a monospace face; on this one it just
+       makes small text harder to read. */
+    letter-spacing: 0.04em;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* Utility caps without the pill, for column headers and data. */
+  .label {
+    font-family: var(--font-utility);
+    font-size: var(--text-step--2);
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+  }
+
+  /* The signature surface treatment. Red type on black in the references is
+     never flat: it blooms, the way saturated red does when it is pushed in
+     camera or lit by a practical. Two soft red halos, no hard offset. Kept
+     cheap because text-shadow on very large type is expensive to repaint. */
+  .bloom {
+    /* Red on black blooms. Two stops: a tight hot edge and a wider soft halo,
+       matching the way saturated red spreads on a pushed frame. */
+    text-shadow:
+      0 0 0.02em color-mix(in srgb, var(--color-flare) 55%, transparent),
+      0 0 0.13em color-mix(in srgb, var(--color-flare) 32%, transparent);
+  }
+
+  /* Melted letterforms. The displacement filter lives in Base.astro; these two
+     classes just pick the right scale for the size of type they are on.
+
+     Applied to display type only. Never put this on body copy: it is a real
+     legibility cost and the references never do it to anything you have to
+     actually read. */
+  .warp {
+    filter: url('#warp');
+  }
+
+  .warp-sm {
+    filter: url('#warp-sm');
+  }
+
+  /* A displacement map is a deliberate distortion of the rendered glyph, which
+     is exactly the kind of visual instability the reduced-motion preference
+     exists to opt out of. Drop back to clean letterforms. */
+  @media (prefers-reduced-motion: reduce) {
+    .warp,
+    .warp-sm {
+      filter: none;
+    }
+  }
+
+  /* Display lockup default. Groovy Madness is a single static weight, so there
+     is nothing to set here but size and rhythm: the fit script scales
+     font-size, and the face supplies all of the character. */
+  .lockup {
+    font-family: var(--font-display);
+    line-height: 0.9;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .room {
+    padding-block: var(--spacing-room);
+    padding-inline: var(--spacing-gutter);
+  }
+
+  /* Media rooms. One step off the page black, no type over images. */
+  .room-dark {
+    background-color: var(--color-corner);
+    color: var(--color-bone);
+  }
+
+  /* The one light room. Case studies and about, where there is real reading to
+     do. Red stays the display colour, black becomes the body copy. */
+  .room-read {
+    background-color: var(--color-bone);
+    color: var(--color-ink);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}

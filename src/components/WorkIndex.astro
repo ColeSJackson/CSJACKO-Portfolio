@@ -1,0 +1,172 @@
+---
+/**
+ * The credibility block. Everything, dense and scannable.
+ *
+ * Deliberately unfiltered: the volume is the argument, and a filter UI invites
+ * you to look at less of it. Context is a column you read, not a control you
+ * press.
+ */
+
+import type { CollectionEntry } from 'astro:content';
+import { DISCIPLINE_LABEL, CONTEXT_SHORT, CONTEXT_LABEL } from '../content.config';
+
+interface Props {
+  entries: CollectionEntry<'work'>[];
+}
+
+const { entries } = Astro.props;
+
+const sorted = [...entries].sort(
+  (a, b) => b.data.year - a.data.year || a.data.client.localeCompare(b.data.client),
+);
+---
+
+<section class="index room" id="index" aria-labelledby="index-heading">
+  <header class="index__head">
+    <h2 id="index-heading" class="label">Index</h2>
+    <p class="label index__count">{sorted.length} entries</p>
+  </header>
+
+  <ol class="index__list">
+    {
+      sorted.map((entry) => {
+        const d = entry.data;
+        return (
+          <li class="ix">
+            <a class="ix__link" href={`/work/${entry.id}`}>
+              <span class="ix__year label">{d.year}</span>
+              <span class="ix__client">{d.client}</span>
+              <span class="ix__summary">{d.summary}</span>
+              <span class="ix__discipline label">
+                {DISCIPLINE_LABEL[d.discipline]}
+              </span>
+              <span class="ix__context label" title={CONTEXT_LABEL[d.context]}>
+                {CONTEXT_SHORT[d.context]}
+              </span>
+            </a>
+          </li>
+        );
+      })
+    }
+  </ol>
+
+  <p class="index__key label">
+    MH Motohaus &nbsp;·&nbsp; CS CSJACKO
+  </p>
+</section>
+
+<style>
+  /* No background: this section sits directly on the drifting field, which is
+     what makes the index read as part of the same surface as the hero. */
+  .index {
+    color: var(--color-bone);
+  }
+
+  .index__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .index__head h2,
+  .index__count {
+    margin: 0;
+  }
+
+  .index__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-block-start: 1px solid color-mix(in srgb, var(--color-bone) 30%, transparent);
+  }
+
+  .ix {
+    border-block-end: 1px solid color-mix(in srgb, var(--color-bone) 15%, transparent);
+  }
+
+  .ix__link {
+    display: grid;
+    grid-template-columns: 4rem 11rem minmax(0, 1fr) 8rem 2rem;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.7rem 0.25rem;
+    color: inherit;
+    text-decoration: none;
+    transition:
+      background-color 160ms var(--ease-settle),
+      padding-inline-start 160ms var(--ease-settle);
+  }
+
+  /* The row fills red on hover. This is the loudest interaction in the index
+     and the reason the block does not read as a static table. */
+  .ix__link:hover {
+    background-color: var(--color-flare);
+    color: var(--color-bone);
+    padding-inline-start: 0.75rem;
+  }
+
+  .ix__year {
+    opacity: 0.6;
+  }
+
+  .ix__client {
+    /* Text face, not display: this is body size inside a sixteen-row table,
+       which is the wrong place to spend the display face. */
+    font-family: var(--font-utility);
+    font-size: var(--text-step-0);
+    letter-spacing: 0.01em;
+  }
+
+  .ix__summary {
+    font-size: var(--text-step-0);
+    opacity: 0.85;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ix__discipline {
+    opacity: 0.6;
+  }
+
+  .ix__context {
+    justify-self: end;
+    opacity: 0.6;
+  }
+
+  .index__key {
+    margin: 1.25rem 0 0;
+    opacity: 0.55;
+  }
+
+  @media (max-width: 860px) {
+    .ix__link {
+      grid-template-columns: 3.5rem minmax(0, 1fr) 2rem;
+      grid-template-areas:
+        'year client ctx'
+        'year summary ctx';
+      row-gap: 0.25rem;
+      padding-block: 0.85rem;
+    }
+
+    .ix__year {
+      grid-area: year;
+    }
+    .ix__client {
+      grid-area: client;
+    }
+    .ix__summary {
+      grid-area: summary;
+      white-space: normal;
+      font-size: var(--text-step--1);
+    }
+    .ix__context {
+      grid-area: ctx;
+    }
+    .ix__discipline {
+      display: none;
+    }
+  }
+</style>

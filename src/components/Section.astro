@@ -1,0 +1,355 @@
+---
+/**
+ * Shared layout for the four top-level sections.
+ *
+ * Two layers on every page. Featured pieces are shown large, one per row, with
+ * their statement. Everything else drops into a compact grid below. That split
+ * is what stops a section reading as an undifferentiated pile: the work you
+ * most want seen is physically bigger.
+ *
+ * Groups are optional. Design passes subsections so paid social, email and
+ * print each get their own heading; the other sections pass nothing and render
+ * one flat list.
+ */
+
+import type { CollectionEntry } from 'astro:content';
+import Figure from './Figure.astro';
+import { CONTEXT_LABEL, SUBSECTION_LABEL, SUBSECTION_ORDER } from '../content.config';
+
+interface Props {
+  title: string;
+  intro?: string;
+  entries: CollectionEntry<'work'>[];
+  unit?: string;
+  /** Split the compact layer into named groups. Design only, today. */
+  grouped?: boolean;
+}
+
+const { title, intro, entries, unit = 'pieces', grouped = false } = Astro.props;
+
+const byYear = (a: CollectionEntry<'work'>, b: CollectionEntry<'work'>) =>
+  b.data.year - a.data.year;
+
+const featured = entries.filter((e) => e.data.featured).sort(byYear);
+const rest = entries.filter((e) => !e.data.featured).sort(byYear);
+
+/* Only render a group that actually has entries, so an empty print section
+   costs nothing and appears by itself the moment a print piece is added. */
+const groups = grouped
+  ? SUBSECTION_ORDER.map((key) => ({
+      key,
+      label: SUBSECTION_LABEL[key],
+      items: rest.filter((e) => e.data.subsection === key),
+    })).filter((g) => g.items.length > 0)
+  : [];
+
+const ungrouped = grouped
+  ? rest.filter((e) => !e.data.subsection)
+  : rest;
+
+/** Leads with a real media asset, falling back to the cover. */
+function lead(entry: CollectionEntry<'work'>) {
+  const d = entry.data;
+  return (
+    d.media.flatMap((block) => block.assets).find(Boolean) ?? {
+      type: 'image' as const,
+      src: d.cover,
+      alt: d.coverAlt,
+    }
+  );
+}
+---
+
+<section class="sc">
+  <header class="sc__head">
+    <a href="/" class="pill">Back</a>
+    <h1 class="sc__title bloom warp-sm">{title}</h1>
+    <p class="sc__count label">{entries.length} {unit}</p>
+  </header>
+
+  {intro && <p class="sc__intro text-pretty">{intro}</p>}
+
+  {
+    featured.length > 0 && (
+      <ul class="sc__featured">
+        {featured.map((entry, i) => {
+          const d = entry.data;
+          return (
+            <li class="feat">
+              <a class="feat__link" href={`/work/${entry.id}`}>
+                <div class="feat__media">
+                  <Figure
+                    asset={lead(entry)}
+                    eager={i === 0}
+                    placeholder={d.placeholder}
+                    sizes="(min-width: 900px) 62vw, 92vw"
+                  />
+                </div>
+                <div class="feat__meta">
+                  <h2 class="feat__name">{d.title}</h2>
+                  <p class="feat__client label">
+                    <span>{d.client}</span>
+                    <span>{CONTEXT_LABEL[d.context]}</span>
+                    <span>{d.year}</span>
+                  </p>
+                  <p class="feat__statement text-pretty">{d.statement}</p>
+                </div>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    )
+  }
+
+  {ungrouped.length > 0 && <div class="sc__grid"><Fragment>
+    {ungrouped.map((entry) => {
+      const d = entry.data;
+      return (
+        <a class="card" href={`/work/${entry.id}`}>
+          <div class="card__media">
+            <Figure
+              asset={lead(entry)}
+              placeholder={d.placeholder}
+              sizes="(min-width: 900px) 30vw, 92vw"
+            />
+          </div>
+          <h3 class="card__name">{d.title}</h3>
+          <p class="card__meta label">
+            <span>{d.client}</span>
+            <span>{d.year}</span>
+          </p>
+        </a>
+      );
+    })}
+  </Fragment></div>}
+
+  {
+    groups.map((group) => (
+      <section class="sc__group" aria-labelledby={`group-${group.key}`}>
+        <h2 id={`group-${group.key}`} class="sc__group-head label">
+          {group.label}
+          <span class="sc__group-count">{group.items.length}</span>
+        </h2>
+
+        <div class="sc__grid">
+          {group.items.map((entry) => {
+            const d = entry.data;
+            return (
+              <a class="card" href={`/work/${entry.id}`}>
+                <div class="card__media">
+                  <Figure
+                    asset={lead(entry)}
+                    placeholder={d.placeholder}
+                    sizes="(min-width: 900px) 30vw, 92vw"
+                  />
+                </div>
+                <h3 class="card__name">{d.title}</h3>
+                <p class="card__meta label">
+                  <span>{d.client}</span>
+                  <span>{d.year}</span>
+                </p>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    ))
+  }
+
+  <slot />
+</section>
+
+<style>
+  .sc {
+    background-color: var(--color-corner);
+    padding: var(--spacing-gutter);
+    padding-block-end: var(--spacing-room);
+  }
+
+  .sc__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem 1.5rem;
+    margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
+  }
+
+  .sc__head a {
+    color: var(--color-bone);
+    text-decoration: none;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .sc__head a:hover {
+    background-color: var(--color-flare);
+    color: var(--color-bone);
+  }
+
+  .sc__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    color: var(--color-flare);
+    margin: 0;
+    margin-inline-end: auto;
+  }
+
+  .sc__count {
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  .sc__intro {
+    max-width: 52ch;
+    margin: 0 0 clamp(2rem, 6vh, 4rem);
+    font-size: var(--text-step-1);
+    opacity: 0.8;
+  }
+
+  /* -- Featured layer -- */
+
+  .sc__featured {
+    list-style: none;
+    margin: 0 0 var(--spacing-room);
+    padding: 0;
+    display: grid;
+    gap: var(--spacing-room);
+  }
+
+  .feat__link {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: end;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .feat__media {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feat__link:hover .feat__media {
+    outline: 2px solid var(--color-flare);
+    outline-offset: 4px;
+  }
+
+  .feat__name {
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 0.95;
+    text-transform: uppercase;
+    letter-spacing: -0.015em;
+    margin: 0 0 0.75rem;
+    transition: color 200ms var(--ease-settle);
+  }
+
+  .feat__link:hover .feat__name {
+    color: var(--color-flare);
+  }
+
+  .feat__client {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    opacity: 0.55;
+    margin: 0 0 0.9rem;
+  }
+
+  .feat__statement {
+    margin: 0;
+    max-width: 40ch;
+    font-size: var(--text-step-0);
+    opacity: 0.8;
+  }
+
+  /* -- Compact layer -- */
+
+  .sc__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1rem, 2.5vw, 2rem);
+  }
+
+  .card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .card__media {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card:hover .card__media {
+    outline: 2px solid var(--color-flare);
+    outline-offset: 3px;
+  }
+
+  .card__name {
+    font-family: var(--font-display);
+    font-size: var(--text-step-1);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    margin: 0.75rem 0 0.35rem;
+    transition: color 200ms var(--ease-settle);
+  }
+
+  .card:hover .card__name {
+    color: var(--color-flare);
+  }
+
+  .card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  /* -- Groups -- */
+
+  .sc__group {
+    margin-top: var(--spacing-room);
+  }
+
+  .sc__group-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 1.5rem;
+    padding-block-end: 0.75rem;
+    border-block-end: 1px solid
+      color-mix(in srgb, var(--color-bone) 28%, transparent);
+  }
+
+  .sc__group-count {
+    opacity: 0.55;
+  }
+
+  @media (max-width: 900px) {
+    .feat__link {
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .sc__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    .sc__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

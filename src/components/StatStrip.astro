@@ -1,0 +1,126 @@
+---
+/**
+ * Tale of the tape.
+ *
+ * A fight card compares two fighters across a fixed row of attributes. Here the
+ * same device carries campaign results, which is how the marketing work gets
+ * the same energy as the photography.
+ *
+ * Employer results are withheld unless a piece explicitly clears them. The
+ * withheld state renders as a visible marker rather than an absence, because a
+ * gap reads as "no results" and a marker reads as "results exist, under NDA".
+ */
+
+interface Props {
+  stats: { label: string; value: string }[];
+  publicResults: boolean;
+  tone?: 'light' | 'dark';
+}
+
+const { stats, publicResults, tone = 'light' } = Astro.props;
+---
+
+{stats.length > 0 && (
+<dl class:list={['tape', `tape--${tone}`]}>
+  {
+    stats.map((stat) => (
+      <div class="tape__cell">
+        <dt class="label tape__label">{stat.label}</dt>
+        <dd class="tape__value">
+          {publicResults ? (
+            stat.value
+          ) : (
+            <span class="tape__withheld" title="Employer result, not published">
+              &#9679;&#9679;&#9679;&#9679;
+            </span>
+          )}
+        </dd>
+      </div>
+    ))
+  }
+
+  {
+    !publicResults && (
+      <div class="tape__cell tape__cell--note">
+        <dt class="sr-only">Note</dt>
+        <dd class="label tape__note">Employer results, withheld</dd>
+      </div>
+    )
+  }
+</dl>
+)}
+
+<style>
+  .tape {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin: 0;
+    border-block: 1px solid currentColor;
+  }
+
+  .tape__cell {
+    flex: 1 1 8rem;
+    padding: 0.85rem 1rem 0.9rem;
+    border-inline-end: 1px solid currentColor;
+    /* Values sit on a shared baseline even when a label wraps to two lines,
+       which is what makes the strip read as a tale of the tape rather than
+       three unrelated stats. */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .tape__label {
+    min-height: 2.4em;
+  }
+
+  .tape__cell:last-child {
+    border-inline-end: 0;
+  }
+
+  .tape__label {
+    opacity: 0.65;
+    margin-bottom: 0.5rem;
+  }
+
+  .tape__value {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1;
+  }
+
+  .tape__withheld {
+    letter-spacing: 0.1em;
+    font-size: 0.5em;
+    vertical-align: middle;
+    opacity: 0.5;
+  }
+
+  .tape__cell--note {
+    flex: 1 1 100%;
+    border-inline-end: 0;
+    border-block-start: 1px solid currentColor;
+  }
+
+  .tape__note {
+    margin: 0;
+    opacity: 0.6;
+  }
+
+  .tape--dark {
+    color: var(--color-bone);
+  }
+
+  .tape--light {
+    color: inherit;
+  }
+
+  @media (max-width: 520px) {
+    .tape__cell {
+      flex: 1 1 50%;
+      border-block-start: 1px solid currentColor;
+    }
+  }
+</style>

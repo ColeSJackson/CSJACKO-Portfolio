@@ -1,0 +1,33 @@
+---
+/**
+ * Edit. Reached from the word EDIT in the hero.
+ *
+ * Video is never committed to the repo, so each piece carries a poster image
+ * and an external embed URL. The player loads nothing until someone presses
+ * play.
+ */
+
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import ContactFooter from '../components/ContactFooter.astro';
+
+const entries = await getCollection(
+  'work',
+  ({ data }) => !data.draft && data.section === 'edit',
+);
+---
+
+<Base
+  title="Edit / Cole SJ"
+  description="Video work. Brand films, product films, reels and same-night fight recaps."
+  ground="corner"
+>
+  <Section
+    title="Edit"
+    entries={entries}
+    unit="pieces"
+    intro="Brand and product films, social reels and same-night fight recaps. Shot and cut end to end."
+  />
+  <ContactFooter />
+</Base>

@@ -1,0 +1,28 @@
+{
+  "name": "csjacko",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "placeholders": "node scripts/make-placeholders.mjs",
+    "photos": "node scripts/prepare-photos.mjs"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
+    "@tailwindcss/vite": "^4.1.13",
+    "astro": "^5.14.1",
+    "tailwindcss": "^4.1.13"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.9.2"
+  },
+  "//": "Tailwind's Vite plugin resolves its own Vite 8 while Astro pins Vite 6. Two copies means two sets of incompatible Plugin types and astro check fails. Tailwind accepts ^6, so one copy satisfies both.",
+  "overrides": {
+    "vite": "^6.4.1"
+  }
+}

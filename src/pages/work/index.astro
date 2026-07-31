@@ -1,0 +1,57 @@
+---
+/**
+ * The full work index.
+ *
+ * This used to sit at the bottom of the homepage. It moved here so the home
+ * page is hero, featured, contact and nothing else: a hiring manager gets the
+ * range in one screen and the volume only if they want it.
+ *
+ * The route is /work, which sits beside the existing /work/[slug] case studies
+ * and gives the nav a single destination for everything.
+ */
+
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import WorkIndex from '../../components/WorkIndex.astro';
+import ContactFooter from '../../components/ContactFooter.astro';
+
+const entries = await getCollection('work', ({ data }) => !data.draft);
+---
+
+<Base
+  title="Work / Cole SJ"
+  description="Everything. Photography, video, paid social design, email and social management across nine powersports brands and combat sports as CSJACKO."
+>
+  <section class="wk">
+    <nav class="wk__back">
+      <a href="/" class="pill">Back</a>
+    </nav>
+
+    <WorkIndex entries={entries} />
+  </section>
+
+  <ContactFooter />
+</Base>
+
+<style>
+  .wk {
+    padding-block-start: clamp(1.25rem, 3vh, 2rem);
+  }
+
+  .wk__back {
+    padding-inline: var(--spacing-gutter);
+  }
+
+  .wk__back a {
+    color: var(--color-bone);
+    text-decoration: none;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .wk__back a:hover {
+    background-color: var(--color-flare);
+    color: var(--color-bone);
+  }
+</style>

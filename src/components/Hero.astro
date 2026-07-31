@@ -1,0 +1,284 @@
+---
+/**
+ * The signature hero.
+ *
+ * Both display lines are solved to the *same measure*, so the mark and the
+ * discipline row sit flush on both edges. Groovy Madness is a static font with
+ * no width axis, so the fit is done by scaling font-size: the two lines end up
+ * at different cap heights, which is what a justified poster stack does and
+ * what suits a face this characterful.
+ *
+ * The four disciplines are the primary navigation. Each word is a real link to
+ * its own archive, so the hero is not decoration you scroll past: it is the
+ * menu. They share one line rather than getting one each because filling the
+ * measure with a single word needs roughly 350px type, and four stacked lines
+ * of that do not fit a viewport.
+ */
+
+const DISCIPLINES = [
+  { word: 'SHOOT', href: '/shoot', label: 'Photography' },
+  { word: 'EDIT', href: '/edit', label: 'Video and reels' },
+  { word: 'DESIGN', href: '/design', label: 'Paid social, email and print design' },
+  { word: 'STRATEGY', href: '/strategy', label: 'Planning and content strategy' },
+];
+---
+
+<section class="hero">
+  <nav class="hero__nav" aria-label="Secondary">
+    <span class="label">Cole SJ</span>
+    <ul>
+      <li><a href="/shoot">Shoot</a></li>
+      <li><a href="/edit">Edit</a></li>
+      <li><a href="/design">Design</a></li>
+      <li><a href="/strategy">Strategy</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <div class="hero__stack" data-fit-group>
+    <h1 class="lockup bloom warp hero__mark" data-fit style="--i:0">
+      CSJACKO
+    </h1>
+
+    <nav class="hero__disciplines" aria-label="Work by discipline">
+      <p class="lockup hero__row" data-fit style="--i:1">
+        {
+          DISCIPLINES.map((d) => (
+            <a class="hero__word" href={d.href} aria-label={d.label}>
+              {d.word}
+            </a>
+          ))
+        }
+      </p>
+    </nav>
+  </div>
+
+  <div class="hero__foot">
+    <div class="hero__intro">
+      <p class="text-pretty">
+        I&rsquo;m a Content and Digital Marketing Executive across nine
+        motorcycle accessory brands. Outside of work, I shoot combat sports
+        photography and videography with my own freelance business.
+      </p>
+      <p class="text-pretty">
+        I feel most alive and happy when I have creative freedom.
+      </p>
+    </div>
+    <p class="label hero__scroll" aria-hidden="true">Scroll</p>
+  </div>
+</section>
+
+<style>
+  .hero {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.25rem, 3vh, 2.25rem);
+    padding: var(--spacing-gutter);
+    padding-bottom: clamp(0.75rem, 2vh, 1.5rem);
+  }
+
+  /* The lockup and the paragraph read as one block, sitting low in the hero.
+     All the spare height collects above them: put any of it below and it lands
+     between the paragraph and the first row of work, where it reads as the page
+     having stopped rather than as breathing room. */
+  .hero__stack {
+    margin-top: auto;
+  }
+
+  /* Nav is part of the hero and scrolls away with it. The site has no
+     persistent top bar: the four discipline words are the real navigation. */
+  .hero__nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+
+  .hero__nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .hero__nav a {
+    font-family: var(--font-utility);
+    font-size: var(--text-step--2);
+    letter-spacing: 0.04em;
+    color: var(--color-bone);
+    text-decoration: none;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid transparent;
+    transition:
+      color 200ms var(--ease-settle),
+      border-color 200ms var(--ease-settle);
+  }
+
+  .hero__nav a:hover {
+    color: var(--color-flare);
+    border-bottom-color: var(--color-flare);
+  }
+
+  .hero__stack {
+    width: 100%;
+  }
+
+  /* Shrink-to-fit is load-bearing: the solver measures offsetWidth, which on a
+     full-width block would just report the container. */
+  .hero__mark,
+  .hero__row {
+    width: max-content;
+    max-width: none;
+    white-space: nowrap;
+
+    /* Entrance is pure CSS and depends on nothing. If the fit script never
+       runs, the lines still arrive, just unfitted, rather than staying
+       invisible. Transform and opacity only, so it stays on the compositor. */
+    animation: lockup-in 800ms var(--ease-settle) backwards;
+    animation-delay: calc(var(--i) * 110ms);
+  }
+
+  @keyframes lockup-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.1em);
+    }
+  }
+
+  .hero__mark {
+    /* --fit-scale is written by the solver only when the axis runs out, which
+       is what stops a long line overflowing on a narrow phone. */
+    font-size: calc(clamp(3rem, 21vw, 19rem) * var(--fit-scale, 1));
+    color: var(--color-flare);
+    line-height: 0.8;
+  }
+
+  .hero__disciplines {
+    margin-top: clamp(0.4rem, 1.2vh, 0.9rem);
+  }
+
+  .hero__row {
+    font-size: calc(clamp(0.85rem, 4.1vw, 3.4rem) * var(--fit-scale, 1));
+    color: var(--color-bone);
+    line-height: 1.1;
+    letter-spacing: 0;
+
+    /* Chips have their own padding, so the gap only needs to separate their
+       outlines rather than the words themselves. */
+    display: flex;
+    gap: 0.22em;
+  }
+
+  /* Each discipline is a target, and has to look like one at rest. A hover-only
+     underline is invisible to anyone who never hovers, and invisible to every
+     touch device, so these carry a permanent outline instead.
+
+     Every value is in em so the whole chip scales with the fit solver. Using px
+     for the padding or the border would make the buttons drift out of
+     proportion at each viewport as the font-size is solved. */
+  .hero__word {
+    color: inherit;
+    text-decoration: none;
+    padding: 0.24em 0.4em 0.3em;
+    /* Floored at 1px. Purely em-based, the border solves to 0.5px on a phone
+       where the fitted font-size is small, and a half-pixel hairline is the
+       same as no affordance at all. The em value still governs at large
+       sizes. */
+    border: max(1px, 0.045em) solid
+      color-mix(in srgb, var(--color-bone) 38%, transparent);
+    border-radius: 0.32em;
+    transition:
+      background-color 220ms var(--ease-settle),
+      border-color 220ms var(--ease-settle),
+      color 220ms var(--ease-settle);
+  }
+
+  .hero__word:hover,
+  .hero__word:focus-visible {
+    background-color: var(--color-flare);
+    border-color: var(--color-flare);
+    color: var(--color-bone);
+  }
+
+  .hero__foot {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2rem;
+
+    /* Replaces the separation the byline used to provide. Without it the body
+       copy sits directly under the display row with only the hero's own gap
+       between them, and the two registers run together. */
+    margin-top: clamp(1.25rem, 3.5vh, 2.75rem);
+  }
+
+  .hero__intro {
+    /* Widened from a two-line tagline measure once this became a real
+       paragraph. Much narrower and it stacks into a thin ragged column. */
+    max-width: 52ch;
+    /* A step up from default body size. This is the only prose in the hero, so
+       it carries more weight than a normal paragraph would. */
+    font-size: var(--text-step-1);
+    color: var(--color-bone);
+    opacity: 0.75;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .hero__intro p {
+    margin: 0;
+  }
+
+  /* The second line is the personal one. Giving it its own space rather than
+     running it on keeps it as a closing beat instead of a fourth clause. */
+  .hero__intro p + p {
+    margin-top: 0.9em;
+  }
+
+  .hero__scroll {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    color: var(--color-flare);
+    writing-mode: vertical-rl;
+    margin: 0;
+  }
+
+  @media (max-width: 640px) {
+    .hero__scroll {
+      display: none;
+    }
+
+    /* No forced full height on a phone.
+
+       The lockup is fitted to the viewport *width*, so on a tall narrow screen
+       it can only ever be so tall, and holding the hero at 100svh just parks
+       190px of nothing above and below it. Letting the hero take its content
+       height removes the void, and the work starting to show at the bottom of
+       the screen is a better invitation to scroll than emptiness is. */
+    .hero {
+      min-height: auto;
+      padding-block: clamp(1.25rem, 4vh, 2rem) clamp(0.5rem, 2vh, 1rem);
+    }
+
+    .hero__stack {
+      margin-top: clamp(2rem, 8vh, 4rem);
+    }
+
+    .hero__foot {
+      margin-bottom: 0;
+    }
+  }
+</style>
+
+<script>
+  import { initFit } from '../scripts/fit-lines';
+
+  initFit();
+</script>

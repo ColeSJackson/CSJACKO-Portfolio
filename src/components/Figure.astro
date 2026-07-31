@@ -1,0 +1,233 @@
+---
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+type Asset =
+  | { type: 'image'; src: ImageMetadata; alt: string }
+  | {
+      type: 'video';
+      preview?: string;
+      poster: ImageMetadata;
+      alt: string;
+      embed?: string;
+      href?: string;
+    };
+
+interface Props {
+  asset: Asset;
+  /** Eager only for the hero of a page. Everything else waits. */
+  eager?: boolean;
+  /** Marks the asset visibly as a stand-in. */
+  placeholder?: boolean;
+  sizes?: string;
+}
+
+const {
+  asset,
+  eager = false,
+  placeholder = false,
+  sizes = '(min-width: 1024px) 45vw, 92vw',
+} = Astro.props;
+
+const WIDTHS = [400, 700, 1000, 1400, 1800];
+---
+
+<figure class="fig">
+  {
+    asset.type === 'image' ? (
+      <Picture
+        src={asset.src}
+        alt={asset.alt}
+        formats={['avif', 'webp']}
+        fallbackFormat="jpg"
+        widths={WIDTHS}
+        sizes={sizes}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding={eager ? 'sync' : 'async'}
+        fetchpriority={eager ? 'high' : 'auto'}
+        class="fig__media"
+      />
+    ) : (
+      <div
+        class="fig__video"
+        data-video={asset.preview ?? undefined}
+        data-embed={asset.embed ?? undefined}
+      >
+        <Picture
+          src={asset.poster}
+          alt={asset.alt}
+          formats={['avif', 'webp']}
+          fallbackFormat="jpg"
+          widths={WIDTHS}
+          sizes={sizes}
+          loading={eager ? 'eager' : 'lazy'}
+          decoding="async"
+          class="fig__media"
+        />
+
+        {/* An embed becomes a real button: pressing it swaps the iframe in.
+            Without one, fall back to a plain link out. */}
+        {asset.embed ? (
+          <button type="button" class="fig__play fig__play--btn" data-play>
+            <span class="pill">Play</span>
+          </button>
+        ) : (
+          asset.href && (
+            <a class="fig__play" href={asset.href} target="_blank" rel="noopener">
+              <span class="pill">Watch the cut</span>
+            </a>
+          )
+        )}
+      </div>
+    )
+  }
+
+  {placeholder && <figcaption class="fig__flag label">Placeholder</figcaption>}
+</figure>
+
+<style>
+  .fig {
+    position: relative;
+    margin: 0;
+  }
+
+  .fig__media {
+    width: 100%;
+    height: auto;
+  }
+
+  .fig__video {
+    position: relative;
+  }
+
+  /* The looping preview is injected over the poster only once the block is in
+     view, so a page of ten videos costs nothing until you scroll to them. */
+  .fig__video :global(video),
+  .fig__video :global(iframe) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    object-fit: cover;
+  }
+
+  .fig__play {
+    position: absolute;
+    left: 0.75rem;
+    bottom: 0.75rem;
+    z-index: 2;
+    border: 0;
+    cursor: pointer;
+    color: var(--color-bone);
+    text-decoration: none;
+    background-color: color-mix(in srgb, var(--color-ink) 75%, transparent);
+    border-radius: 999px;
+  }
+
+  .fig__play:hover .pill {
+    background-color: var(--color-tape);
+    color: var(--color-ink);
+  }
+
+  .fig__flag {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 2;
+    padding: 0.25em 0.5em;
+    background-color: var(--color-ink);
+    color: var(--color-tape);
+    opacity: 0.75;
+  }
+</style>
+
+<script>
+  /**
+   * Silent looping previews load only when their block reaches the viewport.
+   * Poster frames are always set, so nothing pops in from empty.
+   */
+  function init() {
+    const blocks = document.querySelectorAll<HTMLElement>('[data-video]');
+    if (!blocks.length) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return; // poster only, which is the correct reduced state
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+
+          const host = entry.target as HTMLElement;
+          const src = host.dataset.video;
+          if (!src || host.querySelector('video')) continue;
+
+          const video = document.createElement('video');
+          video.src = src;
+          video.muted = true;
+          video.loop = true;
+          video.playsInline = true;
+          video.preload = 'metadata';
+          video.setAttribute('aria-hidden', 'true');
+          video.setAttribute('tabindex', '-1');
+          host.appendChild(video);
+          video.play().catch(() => {
+            /* Autoplay refused. The poster underneath is still correct. */
+            video.remove();
+          });
+
+          io.unobserve(host);
+        }
+      },
+      { rootMargin: '200px' },
+    );
+
+    blocks.forEach((b) => io.observe(b));
+  }
+
+  /**
+   * Click-to-load embeds.
+   *
+   * A YouTube or Vimeo iframe is roughly a megabyte of third-party JavaScript
+   * and it sets cookies, so loading one per video on page load would be the
+   * single most expensive thing on the site. Nothing is requested until the
+   * visitor actually presses play; until then they see the poster frame, which
+   * is a real image from the build pipeline.
+   */
+  function initEmbeds() {
+    document.querySelectorAll<HTMLElement>('[data-embed]').forEach((host) => {
+      const button = host.querySelector<HTMLButtonElement>('[data-play]');
+      const url = host.dataset.embed;
+      if (!button || !url) return;
+
+      button.addEventListener(
+        'click',
+        () => {
+          const frame = document.createElement('iframe');
+          /* autoplay so the click that loads it also starts it: two clicks to
+             play a video you already asked for is a broken interaction. */
+          frame.src = url + (url.includes('?') ? '&' : '?') + 'autoplay=1';
+          frame.title = button.closest('figure')?.querySelector('img')?.alt ?? 'Video';
+          frame.allow =
+            'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+          frame.allowFullscreen = true;
+          frame.loading = 'lazy';
+          host.appendChild(frame);
+          button.remove();
+
+          /* A silent preview loop underneath would fight the real audio. */
+          host.querySelector('video')?.remove();
+        },
+        { once: true },
+      );
+    });
+  }
+
+  init();
+  initEmbeds();
+  document.addEventListener('astro:after-swap', () => {
+    init();
+    initEmbeds();
+  });
+</script>

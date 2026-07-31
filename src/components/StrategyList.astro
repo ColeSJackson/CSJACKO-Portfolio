@@ -1,0 +1,254 @@
+---
+/**
+ * Strategy section template.
+ *
+ * The other three sections lead with an image, because the work is the image.
+ * Planning work has no hero frame: the artefact is a calendar, a flow diagram
+ * or a segmentation rule, and none of those read at thumbnail size.
+ *
+ * So this inverts the layout. Each piece leads with the statement, carries its
+ * numbers as callouts, and shows evidence underneath at a size where a
+ * screenshot is actually legible. It reads as a stack of short case studies
+ * rather than a gallery.
+ */
+
+import type { CollectionEntry } from 'astro:content';
+import Figure from './Figure.astro';
+import StatStrip from './StatStrip.astro';
+import { CONTEXT_LABEL, DISCIPLINE_LABEL } from '../content.config';
+
+interface Props {
+  entries: CollectionEntry<'work'>[];
+}
+
+const { entries } = Astro.props;
+
+const sorted = [...entries].sort(
+  (a, b) => Number(b.data.featured) - Number(a.data.featured) || b.data.year - a.data.year,
+);
+---
+
+<section class="st">
+  <header class="st__head">
+    <a href="/" class="pill">Back</a>
+    <h1 class="st__title bloom warp-sm">Strategy</h1>
+    <p class="st__count label">{sorted.length} programmes</p>
+  </header>
+
+  <p class="st__intro text-pretty">
+    Content calendars, campaign planning and the brand channels I run day to
+    day. Less to look at than the other sections, which is rather the point.
+  </p>
+
+  <ol class="st__list">
+    {
+      sorted.map((entry, i) => {
+        const d = entry.data;
+        /* Evidence only: calendars, flow diagrams, screenshots. Capped at
+           three so a long entry cannot turn the page into a scroll. */
+        const evidence = d.media.flatMap((block) => block.assets).slice(0, 3);
+
+        return (
+          <li class="pg">
+            <div class="pg__meta">
+              <span class="pg__index label">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span class="label pg__tags">
+                <span>{DISCIPLINE_LABEL[d.discipline]}</span>
+                <span>{d.client}</span>
+                <span>{CONTEXT_LABEL[d.context]}</span>
+                <span>{d.year}</span>
+              </span>
+            </div>
+
+            <div class="pg__body">
+              <h2 class="pg__statement text-balance">{d.statement}</h2>
+              <p class="pg__outcome text-pretty">{d.outcome}</p>
+
+              <StatStrip
+                stats={d.stats}
+                publicResults={d.publicResults}
+                tone="dark"
+              />
+
+              {evidence.length > 0 && (
+                <div class="pg__evidence" data-count={evidence.length}>
+                  {evidence.map((asset) => (
+                    <Figure
+                      asset={asset}
+                      placeholder={d.placeholder}
+                      sizes="(min-width: 900px) 30vw, 92vw"
+                    />
+                  ))}
+                </div>
+              )}
+
+              <a class="pg__link" href={`/work/${entry.id}`}>
+                <span class="pill">Full case study</span>
+              </a>
+            </div>
+          </li>
+        );
+      })
+    }
+  </ol>
+</section>
+
+<style>
+  .st {
+    background-color: var(--color-corner);
+    padding: var(--spacing-gutter);
+    padding-block-end: var(--spacing-room);
+  }
+
+  .st__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem 1.5rem;
+    margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
+  }
+
+  .st__head a {
+    color: var(--color-bone);
+    text-decoration: none;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .st__head a:hover {
+    background-color: var(--color-flare);
+    color: var(--color-bone);
+  }
+
+  .st__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    color: var(--color-flare);
+    margin: 0;
+    margin-inline-end: auto;
+  }
+
+  .st__count {
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  .st__intro {
+    max-width: 52ch;
+    margin: 0 0 var(--spacing-room);
+    font-size: var(--text-step-1);
+    opacity: 0.8;
+  }
+
+  .st__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--spacing-room);
+  }
+
+  /* Meta in a narrow rail, argument in the wide column. The rail is what makes
+     a stack of case studies scannable without reading every statement. */
+  .pg {
+    display: grid;
+    grid-template-columns: 12rem minmax(0, 1fr);
+    gap: clamp(1rem, 3vw, 2.5rem);
+    padding-block-start: 1.5rem;
+    border-block-start: 1px solid
+      color-mix(in srgb, var(--color-bone) 22%, transparent);
+  }
+
+  .pg__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .pg__index {
+    color: var(--color-flare);
+  }
+
+  .pg__tags {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    opacity: 0.55;
+  }
+
+  .pg__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+
+  .pg__statement {
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1.1;
+    margin: 0;
+    max-width: 26ch;
+  }
+
+  .pg__outcome {
+    margin: 0;
+    max-width: 54ch;
+    font-size: var(--text-step-0);
+    opacity: 0.8;
+  }
+
+  .pg__evidence {
+    display: grid;
+    gap: clamp(0.75rem, 2vw, 1.25rem);
+    width: 100%;
+  }
+
+  .pg__evidence[data-count='2'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pg__evidence[data-count='3'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pg__link {
+    color: var(--color-bone);
+    text-decoration: none;
+  }
+
+  .pg__link:hover .pill {
+    background-color: var(--color-flare);
+    border-color: var(--color-flare);
+  }
+
+  @media (max-width: 860px) {
+    .pg {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+    }
+
+    .pg__meta {
+      flex-direction: row;
+      align-items: baseline;
+      gap: 1rem;
+    }
+
+    .pg__tags {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+    }
+
+    .pg__evidence[data-count='2'],
+    .pg__evidence[data-count='3'] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
