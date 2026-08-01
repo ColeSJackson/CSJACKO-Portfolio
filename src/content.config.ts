@@ -17,6 +17,8 @@ export const SECTIONS = ['shoot', 'edit', 'design', 'strategy'] as const;
 /** Groups within a section. Only design uses these today. */
 export const SUBSECTIONS = ['paid-social', 'email', 'print'] as const;
 
+export type SubsectionKey = (typeof SUBSECTIONS)[number];
+
 export const SECTION_LABEL: Record<(typeof SECTIONS)[number], string> = {
   shoot: 'Shoot',
   edit: 'Edit',
@@ -27,7 +29,14 @@ export const SECTION_LABEL: Record<(typeof SECTIONS)[number], string> = {
 export const SUBSECTION_LABEL: Record<(typeof SUBSECTIONS)[number], string> = {
   'paid-social': 'Paid social',
   email: 'Email',
-  print: 'Print',
+  print: 'Print and event',
+};
+
+/** Full titles for the three design category pages and their landing cards. */
+export const SUBSECTION_TITLE: Record<(typeof SUBSECTIONS)[number], string> = {
+  'paid-social': 'Paid social designs',
+  email: 'Email campaign designs',
+  print: 'Print and event designs',
 };
 
 /** Fixed order so a section page never reshuffles its groups between builds. */

@@ -1,0 +1,89 @@
+---
+/**
+ * The three design category pages, from one template.
+ *
+ * /design/paid-social, /design/email and /design/print are the same page with a
+ * different filter. They are generated from SUBSECTIONS rather than written out
+ * three times, so adding a category is a one-line change in content.config and
+ * a thumbnail on the /design landing page.
+ *
+ * Back goes to /design rather than home: these are one level down, and sending
+ * someone to the homepage from here would lose the category they were in.
+ */
+
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Section from '../../components/Section.astro';
+import ContactFooter from '../../components/ContactFooter.astro';
+import {
+  SUBSECTIONS,
+  SUBSECTION_TITLE,
+  type SubsectionKey,
+} from '../../content.config';
+
+const INTRO: Record<SubsectionKey, string> = {
+  'paid-social':
+    'Scroll-stopping creative for Meta and TikTok, built to be tested rather than admired.',
+  email:
+    'Campaign and lifecycle email design, from one-off sends to flows that keep running.',
+  print:
+    'Stand graphics, printed collateral and the physical side of a launch.',
+};
+
+/* Named per category rather than one generic line, so an empty page still says
+   what belongs there. */
+const EMPTY: Record<SubsectionKey, string> = {
+  'paid-social': 'Nothing here yet. This is where the paid social work will live.',
+  email: 'Nothing here yet. This is where the email campaign work will live.',
+  print: 'Nothing here yet. This is where the printed and event work will live.',
+};
+
+export function getStaticPaths() {
+  return SUBSECTIONS.map((category) => ({ params: { category } }));
+}
+
+const { category } = Astro.params as { category: SubsectionKey };
+
+const entries = await getCollection(
+  'work',
+  ({ data }) =>
+    !data.draft && data.section === 'design' && data.subsection === category,
+);
+
+const title = SUBSECTION_TITLE[category];
+---
+
+<Base
+  title={`${title} / Cole SJ`}
+  description={INTRO[category]}
+  ground="corner"
+>
+  <Section
+    title={title}
+    entries={entries}
+    unit={entries.length === 1 ? 'piece' : 'pieces'}
+    intro={INTRO[category]}
+    backHref="/design"
+    backLabel="Design"
+  >
+    {
+      /* A category with nothing in it still has to be a real page, because the
+         landing page always links to all three. Saying so plainly beats a
+         heading with silence under it. */
+      entries.length === 0 && (
+        <p class="empty text-pretty">{EMPTY[category]}</p>
+      )
+    }
+  </Section>
+
+  <ContactFooter />
+</Base>
+
+<style>
+  .empty {
+    max-width: 48ch;
+    margin: 0;
+    font-size: var(--text-step-1);
+    opacity: 0.6;
+  }
+</style>

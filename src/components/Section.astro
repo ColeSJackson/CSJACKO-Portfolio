@@ -23,9 +23,20 @@ interface Props {
   unit?: string;
   /** Split the compact layer into named groups. Design only, today. */
   grouped?: boolean;
+  /** Where Back goes. Design's category pages return to /design, not home. */
+  backHref?: string;
+  backLabel?: string;
 }
 
-const { title, intro, entries, unit = 'pieces', grouped = false } = Astro.props;
+const {
+  title,
+  intro,
+  entries,
+  unit = 'pieces',
+  grouped = false,
+  backHref = '/',
+  backLabel = 'Back',
+} = Astro.props;
 
 const byYear = (a: CollectionEntry<'work'>, b: CollectionEntry<'work'>) =>
   b.data.year - a.data.year;
@@ -62,7 +73,7 @@ function lead(entry: CollectionEntry<'work'>) {
 
 <section class="sc">
   <header class="sc__head">
-    <a href="/" class="pill">Back</a>
+    <a href={backHref} class="pill">{backLabel}</a>
     <h1 class="sc__title bloom warp-sm">{title}</h1>
     <p class="sc__count label">{entries.length} {unit}</p>
   </header>

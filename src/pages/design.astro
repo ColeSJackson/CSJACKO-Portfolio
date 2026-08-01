@@ -2,34 +2,222 @@
 /**
  * Design. Reached from the word DESIGN in the hero.
  *
- * The only section that groups: paid social, email and print are different
- * crafts and a hiring manager is usually looking for one of them specifically.
- * Groups with no entries do not render, so print appears by itself once a print
- * piece exists.
+ * A junction, not an index. Three categories, three thumbnails, three
+ * destinations, and nothing else: paid social, email and print are different
+ * crafts, and someone arriving here is usually looking for one of them
+ * specifically rather than browsing the lot.
+ *
+ * The work itself lives on /design/[category], which is one template rather
+ * than three hand-built pages. Adding a fourth category means adding it to
+ * SUBSECTIONS and picking a thumbnail below; the route generates itself.
  */
 
 import { getCollection } from 'astro:content';
+import { Picture } from 'astro:assets';
 import Base from '../layouts/Base.astro';
-import Section from '../components/Section.astro';
 import ContactFooter from '../components/ContactFooter.astro';
+import { SUBSECTION_ORDER, SUBSECTION_TITLE } from '../content.config';
+
+/* Thumbnails are chosen by hand rather than pulled from the first entry in
+   each category. The lead image on a category page changes whenever work is
+   added or reordered, and the landing page should not shuffle under you. */
+import paidSocialThumb from '../assets/design/paid-social/7-9x16-large.jpg';
+import emailThumb from '../assets/design/email/legend-gear.jpg';
+import printThumb from '../assets/design/print/nexx-event-stand.jpg';
+
+const THUMBS = {
+  'paid-social': {
+    src: paidSocialThumb,
+    alt: 'NEXX X.R3R Ziger paid social creative, rider mid-corner under a repeating RACE READY headline.',
+  },
+  email: {
+    src: emailThumb,
+    alt: 'Legend Gear email campaign design, full template from masthead to footer.',
+  },
+  print: {
+    src: printThumb,
+    alt: 'NEXX event stand at a show, printed product wall listing the X.WED3 and X.LIFECOUNTRY ranges.',
+  },
+} as const;
 
 const entries = await getCollection(
   'work',
   ({ data }) => !data.draft && data.section === 'design',
 );
+
+/* Counts come from the same collection the category pages read, so a category
+   can never advertise a number its own page does not show. */
+const categories = SUBSECTION_ORDER.map((key) => ({
+  key,
+  title: SUBSECTION_TITLE[key],
+  ...THUMBS[key],
+  count: entries.filter((e) => e.data.subsection === key).length,
+}));
 ---
 
 <Base
   title="Design / Cole SJ"
-  description="Paid social creative, email campaign design and print marketing across nine powersports brands."
+  description="Paid social creative, email campaign design and print and event design across nine powersports brands."
   ground="corner"
 >
-  <Section
-    title="Design"
-    entries={entries}
-    unit="campaigns"
-    grouped
-    intro="Paid social creative, email campaign design and print."
-  />
+  <section class="dz">
+    <header class="dz__head">
+      <a href="/" class="pill">Back</a>
+      <h1 class="dz__title bloom warp-sm">Design</h1>
+      <p class="dz__count label">3 categories</p>
+    </header>
+
+    <ul class="dz__grid">
+      {
+        categories.map((c, i) => (
+          <li class="dz__cell">
+            <a class="dz__card" href={`/design/${c.key}`}>
+              <div class="dz__media">
+                <Picture
+                  src={c.src}
+                  alt={c.alt}
+                  formats={['avif', 'webp']}
+                  fallbackFormat="jpg"
+                  widths={[400, 700, 1000]}
+                  sizes="(min-width: 900px) 31vw, 92vw"
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  class="dz__img"
+                />
+              </div>
+              <h2 class="dz__label">{c.title}</h2>
+              <p class="dz__meta label">
+                {c.count} {c.count === 1 ? 'piece' : 'pieces'}
+              </p>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
   <ContactFooter />
 </Base>
+
+<style>
+  .dz {
+    background-color: var(--color-corner);
+    padding: var(--spacing-gutter);
+    padding-block-end: var(--spacing-room);
+  }
+
+  .dz__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem 1.5rem;
+    margin-bottom: clamp(2rem, 6vh, 4rem);
+  }
+
+  .dz__head a {
+    color: var(--color-bone);
+    text-decoration: none;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .dz__head a:hover {
+    background-color: var(--color-flare);
+    color: var(--color-bone);
+  }
+
+  .dz__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    color: var(--color-flare);
+    margin: 0;
+    margin-inline-end: auto;
+  }
+
+  .dz__count {
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  .dz__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1rem, 2.5vw, 2rem);
+  }
+
+  .dz__card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* One ratio for all three, which is the only way three source images this
+     different can read as a set: a 9x16 ad, an email template several thousand
+     pixels tall, and a phone photo of a stand.
+
+     object-position: top is doing the real work for the email. Centred, a
+     1080x5166 template crops to a band somewhere in its middle, which is a
+     random slice of body copy. Anchored top, it crops to the masthead, which
+     is the part that identifies it. */
+  .dz__media {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+  }
+
+  .dz__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    transition: opacity 240ms var(--ease-settle);
+  }
+
+  .dz__card:hover .dz__media,
+  .dz__card:focus-visible .dz__media {
+    outline: 2px solid var(--color-flare);
+    outline-offset: 3px;
+  }
+
+  .dz__card:hover .dz__img {
+    opacity: 0.82;
+  }
+
+  .dz__label {
+    font-family: var(--font-display);
+    font-size: var(--text-step-1);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    margin: 0.75rem 0 0.35rem;
+    transition: color 200ms var(--ease-settle);
+  }
+
+  .dz__card:hover .dz__label {
+    color: var(--color-flare);
+  }
+
+  .dz__meta {
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .dz__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    .dz__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
