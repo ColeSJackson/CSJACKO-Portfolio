@@ -12,9 +12,15 @@
  *      portrait stays tall and a wide frame stays wide. The grid bends around
  *      the photographs rather than the photographs being cut to fit the grid.
  *
- *   2. The order is alphabetical by filename, which keeps frames from the same
- *      shoot together and makes the wall reproducible: the same file always
- *      lands in the same place, so a specific frame can be pointed at.
+ *   2. Favourites lead, spread across every column. They render in their own
+ *      CSS Grid (3 columns, row-flow) rather than the masonry below, because
+ *      column-based masonry fills one column completely before starting the
+ *      next: with the favourites first in source order that packed all of
+ *      them into column one instead of spreading them. Grid fills row by
+ *      row, so a 3-wide row means every third pick lands in the same column,
+ *      which reads as spread rather than stacked.
+ *
+ *      Edit FAVOURITES to change the picks or their order.
  */
 
 import { Picture, getImage } from 'astro:assets';
@@ -33,6 +39,31 @@ const modules = import.meta.glob<{ default: ImageMetadata }>(
    of hand-written frontmatter. Frames whose names are only a camera counter
    fall back to a plain description. */
 const CAMERA_NOISE = /^(dsc|img|image|untitled)[-_]?\d*$/i;
+
+/* Cole's picks, in the order they should appear. Matched against the
+   processed filename (no extension) in src/assets/shoot. */
+const FAVOURITES = [
+  '2025-london-090',
+  '2025-london-237',
+  'bjj-champs-2026-25',
+  'devpare-17',
+  'devpare-18',
+  'devpare-38',
+  'devpare-50',
+  'devpare-56',
+  'image-115',
+  'image-120',
+  'image-193',
+  'keis-new-forest-038',
+  'keis-new-forest-050',
+  'keis-new-forest-055',
+  'keis-new-forest-056',
+  'photograph-048',
+];
+
+function basenameOf(path: string): string {
+  return path.split('/').pop()!.replace(/\.[^.]+$/, '');
+}
 
 function labelFor(path: string): string {
   const stem = path.split('/').pop()!.replace(/\.[^.]+$/, '');
@@ -60,7 +91,17 @@ type Shot = {
 };
 
 const shots: Shot[] = Object.entries(modules)
-  .sort(([a], [b]) => a.localeCompare(b, 'en', { numeric: true }))
+  .sort(([a], [b]) => {
+    const ai = FAVOURITES.indexOf(basenameOf(a));
+    const bi = FAVOURITES.indexOf(basenameOf(b));
+
+    /* Both favourites: keep FAVOURITES' order. One favourite: it wins.
+       Neither: fall back to the original alphabetical order. */
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return a.localeCompare(b, 'en', { numeric: true });
+  })
   .map(([path, mod]) => {
     const src = mod.default;
     const label = labelFor(path);
@@ -83,6 +124,14 @@ const fulls = await Promise.all(
     getImage({ src: shot.src, format: 'webp', width: 1800, quality: 82 }),
   ),
 );
+
+/* shots is already sorted favourites-first (see the comparator above), so a
+   straight slice at FAVOURITES.length splits it into the two display groups
+   without needing to re-match filenames. fulls stays index-aligned with shots
+   throughout, which is why it is paired here rather than recomputed. */
+const paired = shots.map((shot, i) => ({ shot, full: fulls[i] }));
+const favourites = paired.slice(0, FAVOURITES.length);
+const rest = paired.slice(FAVOURITES.length);
 ---
 
 <Base
@@ -97,15 +146,15 @@ const fulls = await Promise.all(
       <p class="ph__count label">{shots.length} frames</p>
     </header>
 
-    <ul class="ph__grid">
+    <ul class="ph__top">
       {
-        shots.map((shot, i) => (
-          <li class="ph__cell" data-span={shot.span}>
+        favourites.map(({ shot, full }, i) => (
+          <li class="ph__top-cell">
             <button
               type="button"
               class="ph__shot"
               data-shot
-              data-full={fulls[i].src}
+              data-full={full.src}
               data-alt={shot.alt}
               data-caption={shot.caption}
               aria-label={`Open full size: ${shot.alt}`}
@@ -117,7 +166,38 @@ const fulls = await Promise.all(
                 fallbackFormat="jpg"
                 widths={[320, 500, 760, 1100]}
                 sizes="(min-width: 1100px) 30vw, (min-width: 700px) 45vw, 92vw"
-                loading={i < 4 ? 'eager' : 'lazy'}
+                loading={i < 3 ? 'eager' : 'lazy'}
+                decoding="async"
+                fetchpriority={i < 3 ? 'high' : 'auto'}
+                class="ph__img"
+              />
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+
+    <ul class="ph__grid">
+      {
+        rest.map(({ shot, full }) => (
+          <li class="ph__cell" data-span={shot.span}>
+            <button
+              type="button"
+              class="ph__shot"
+              data-shot
+              data-full={full.src}
+              data-alt={shot.alt}
+              data-caption={shot.caption}
+              aria-label={`Open full size: ${shot.alt}`}
+            >
+              <Picture
+                src={shot.src}
+                alt={shot.alt}
+                formats={['avif', 'webp']}
+                fallbackFormat="jpg"
+                widths={[320, 500, 760, 1100]}
+                sizes="(min-width: 1100px) 30vw, (min-width: 700px) 45vw, 92vw"
+                loading="lazy"
                 decoding="async"
                 class="ph__img"
               />
@@ -175,6 +255,25 @@ const fulls = await Promise.all(
     margin: 0;
   }
 
+  /* Favourites: a real 3-column grid, row-flow, so picks land one-per-column
+     in reading order (1st in col 1, 2nd in col 2, 3rd in col 3, 4th back in
+     col 1, and so on) rather than stacking down column one the way the
+     masonry below would.
+
+     align-items: start is what keeps this from becoming the row grid the
+     masonry comment below warns against: a shorter neighbour in the same row
+     just leaves gap beneath it instead of being stretched or cropped to match
+     the row's tallest cell. */
+  .ph__top {
+    list-style: none;
+    margin: 0 0 clamp(1.5rem, 4vw, 3rem);
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: clamp(0.4rem, 1.2vw, 0.9rem);
+  }
+
   /* Column masonry rather than a row grid, because columns let every frame keep
      its own height. A row grid would force a shared row height and start
      cropping, which is the one thing this page must not do. */
@@ -222,12 +321,20 @@ const fulls = await Promise.all(
   }
 
   @media (max-width: 1100px) {
+    .ph__top {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .ph__grid {
       columns: 2;
     }
   }
 
   @media (max-width: 620px) {
+    .ph__top {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
     .ph__grid {
       columns: 1;
     }

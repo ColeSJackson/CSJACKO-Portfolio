@@ -15,7 +15,10 @@ dist/
 # OS junk
 .DS_Store
 
-# Env
+# Env. Keep the example file so a fresh clone knows which vars to set.
 .env
 .env.*
 !.env.example
+
+# Vercel CLI link. Machine-specific, never shared.
+.vercel
