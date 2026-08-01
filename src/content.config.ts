@@ -19,6 +19,37 @@ export const SUBSECTIONS = ['paid-social', 'email', 'print'] as const;
 
 export type SubsectionKey = (typeof SUBSECTIONS)[number];
 
+/** Brands with a planned programme. One button each on /strategy. */
+export const BRANDS = ['keis', 'sw-motech', 'nexx'] as const;
+
+export type BrandKey = (typeof BRANDS)[number];
+
+export const BRAND_LABEL: Record<BrandKey, string> = {
+  keis: 'KEIS',
+  'sw-motech': 'SW-MOTECH',
+  nexx: 'NEXX',
+};
+
+/** The season each brand's plan covers. KEIS runs a winter season rather than
+    a calendar year, which is why its plan straddles two of them. */
+export const BRAND_PERIOD: Record<BrandKey, string> = {
+  keis: '26/27 season',
+  'sw-motech': '2026',
+  nexx: '2026',
+};
+
+/** Channels a programme can run on. Fixed order so a brand page never
+    reshuffles its strands between builds. */
+export const STRANDS = ['email', 'video', 'organic-social'] as const;
+
+export type StrandKey = (typeof STRANDS)[number];
+
+export const STRAND_LABEL: Record<StrandKey, string> = {
+  email: 'Email',
+  video: 'Video',
+  'organic-social': 'Organic social',
+};
+
 export const SECTION_LABEL: Record<(typeof SECTIONS)[number], string> = {
   shoot: 'Shoot',
   edit: 'Edit',
@@ -155,4 +186,69 @@ const work = defineCollection({
   },
 });
 
-export const collections = { work };
+/**
+ * Planned programmes: the calendars behind the channels, not case studies of
+ * finished work.
+ *
+ * Deliberately its own collection rather than a shape bolted onto `work`. A
+ * case study is one artefact with a statement and an outcome; a programme is
+ * dozens of dated sends with no single hero image, and forcing it through the
+ * work schema would mean a cover image and an outcome for something that has
+ * not run yet.
+ *
+ * Two shapes live here, because the source material comes in two:
+ *
+ *   `groups` is for a plan that is a list. KEIS's email season is 24 named
+ *   sends across eight months, so it groups by month and each send is a row.
+ *
+ *   `cadence` is for a plan that is a rhythm. The organic social calendar is
+ *   the same beat repeating every month across three brands, and listing sixty
+ *   rows called "July Post 1" would say less than one line stating the beat.
+ *
+ * A programme can use either or both.
+ */
+const strategy = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/strategy' }),
+  schema: z.object({
+    brand: z.enum(BRANDS),
+    strand: z.enum(STRANDS),
+    title: z.string(),
+
+    /** Shown under the title. "September 2026 to April 2027". */
+    period: z.string(),
+
+    /** Orders strands within a brand page. */
+    order: z.number().int().default(0),
+
+    summary: z.string(),
+
+    /* Month-grouped, dated items. */
+    groups: z
+      .array(
+        z.object({
+          label: z.string(),
+          items: z
+            .array(
+              z.object({
+                title: z.string(),
+                date: z.string().optional(),
+                note: z.string().optional(),
+              }),
+            )
+            .default([]),
+        }),
+      )
+      .default([]),
+
+    /* Label/value facts describing a repeating rhythm. */
+    cadence: z
+      .array(z.object({ label: z.string(), value: z.string() }))
+      .default([]),
+
+    platforms: z.array(z.string()).default([]),
+
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { work, strategy };

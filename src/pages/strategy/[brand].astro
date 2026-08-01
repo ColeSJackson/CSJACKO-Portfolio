@@ -1,0 +1,280 @@
+---
+/**
+ * A brand's planned programmes, from one template.
+ *
+ * /strategy/keis, /strategy/sw-motech and /strategy/nexx are the same page with
+ * a different filter, generated from BRANDS. Each renders that brand's strands
+ * in `order`, and each strand renders whichever of the two shapes it carries.
+ *
+ * `groups` becomes a dated table, because a named send on a named day is the
+ * evidence. `cadence` becomes a row of facts, because a rhythm repeating sixty
+ * times is not evidenced by printing it sixty times.
+ */
+
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import ContactFooter from '../../components/ContactFooter.astro';
+import {
+  BRANDS,
+  BRAND_LABEL,
+  BRAND_PERIOD,
+  STRAND_LABEL,
+  type BrandKey,
+} from '../../content.config';
+
+export function getStaticPaths() {
+  return BRANDS.map((brand) => ({ params: { brand } }));
+}
+
+const { brand } = Astro.params as { brand: BrandKey };
+
+const plans = (
+  await getCollection(
+    'strategy',
+    ({ data }) => !data.draft && data.brand === brand,
+  )
+).sort((a, b) => a.data.order - b.data.order);
+
+const label = BRAND_LABEL[brand];
+const dated = plans.reduce(
+  (n, p) => n + p.data.groups.reduce((m, g) => m + g.items.length, 0),
+  0,
+);
+---
+
+<Base
+  title={`${label} strategy / Cole SJ`}
+  description={`Planned content programmes for ${label}: ${plans
+    .map((p) => STRAND_LABEL[p.data.strand].toLowerCase())
+    .join(', ')}.`}
+  ground="corner"
+>
+  <section class="bp">
+    <header class="bp__head">
+      <a href="/strategy" class="pill">Strategy</a>
+      <h1 class="bp__title bloom warp-sm">{label}</h1>
+      <p class="bp__count label">
+        {BRAND_PERIOD[brand]}{dated > 0 && ` / ${dated} planned dates`}
+      </p>
+    </header>
+
+    {
+      plans.map((plan) => {
+        const d = plan.data;
+        return (
+          <article class="plan">
+            <header class="plan__head">
+              <p class="plan__strand label">{STRAND_LABEL[d.strand]}</p>
+              <h2 class="plan__title">{d.title}</h2>
+              <p class="plan__period label">{d.period}</p>
+              <p class="plan__summary text-pretty">{d.summary}</p>
+            </header>
+
+            {d.cadence.length > 0 && (
+              <dl class="cad">
+                {d.cadence.map((c) => (
+                  <div class="cad__item">
+                    <dt class="label">{c.label}</dt>
+                    <dd>{c.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+
+            {d.platforms.length > 0 && (
+              <p class="plan__platforms label">{d.platforms.join(' / ')}</p>
+            )}
+
+            {d.groups.map((group) => (
+              <section class="grp">
+                <h3 class="grp__head label">
+                  {group.label}
+                  <span class="grp__count">{group.items.length}</span>
+                </h3>
+                <ol class="grp__list">
+                  {group.items.map((item) => (
+                    <li class="row">
+                      <span class="row__date label">{item.date}</span>
+                      <span class="row__body">
+                        <span class="row__title">{item.title}</span>
+                        {item.note && (
+                          <span class="row__note">{item.note}</span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ))}
+          </article>
+        );
+      })
+    }
+  </section>
+
+  <ContactFooter />
+</Base>
+
+<style>
+  .bp {
+    background-color: var(--color-corner);
+    padding: var(--spacing-gutter);
+    padding-block-end: var(--spacing-room);
+  }
+
+  .bp__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem 1.5rem;
+    margin-bottom: clamp(2rem, 6vh, 4rem);
+  }
+
+  .bp__head a {
+    color: var(--color-bone);
+    text-decoration: none;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .bp__head a:hover {
+    background-color: var(--color-flare);
+    color: var(--color-bone);
+  }
+
+  .bp__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    color: var(--color-flare);
+    margin: 0;
+    margin-inline-end: auto;
+  }
+
+  .bp__count {
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  .plan {
+    margin-bottom: var(--spacing-room);
+  }
+
+  .plan__head {
+    max-width: 62ch;
+  }
+
+  .plan__strand {
+    color: var(--color-flare);
+    margin: 0 0 0.5rem;
+  }
+
+  .plan__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.4rem;
+  }
+
+  .plan__period {
+    opacity: 0.55;
+    margin: 0 0 1rem;
+  }
+
+  .plan__summary {
+    margin: 0;
+    font-size: var(--text-step-0);
+    opacity: 0.8;
+  }
+
+  .plan__platforms {
+    opacity: 0.55;
+    margin: 1rem 0 0;
+  }
+
+  /* The rhythm, stated once. */
+  .cad {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    margin: 1.75rem 0 0;
+    padding-block: 1.25rem;
+    border-block: 1px solid
+      color-mix(in srgb, var(--color-bone) 22%, transparent);
+  }
+
+  .cad__item dt {
+    opacity: 0.55;
+    margin-bottom: 0.3rem;
+  }
+
+  .cad__item dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-step-1);
+    line-height: 1;
+  }
+
+  .grp {
+    margin-top: clamp(1.75rem, 4vh, 2.5rem);
+  }
+
+  .grp__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 0.85rem;
+    padding-block-end: 0.6rem;
+    border-block-end: 1px solid
+      color-mix(in srgb, var(--color-bone) 28%, transparent);
+  }
+
+  .grp__count {
+    opacity: 0.55;
+  }
+
+  .grp__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Date in its own column so the eye can run down the schedule without
+     reading the titles, which is how anyone actually scans a calendar. */
+  .row {
+    display: grid;
+    grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+    gap: 1rem;
+    padding-block: 0.6rem;
+    border-block-end: 1px solid
+      color-mix(in srgb, var(--color-bone) 12%, transparent);
+  }
+
+  .row__date {
+    opacity: 0.55;
+  }
+
+  .row__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .row__note {
+    font-size: var(--text-step--1);
+    opacity: 0.6;
+  }
+
+  @media (max-width: 560px) {
+    .row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.15rem;
+    }
+  }
+</style>

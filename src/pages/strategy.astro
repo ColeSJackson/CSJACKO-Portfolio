@@ -2,27 +2,207 @@
 /**
  * Strategy. Reached from the word STRATEGY in the hero.
  *
- * This section evidences planning rather than visual craft, so it uses its own
- * template: statement, stat callouts, then image evidence such as calendars and
- * flow diagrams. It reads as a short case study rather than a gallery.
+ * A junction, like /design: one button per brand, and the plans themselves live
+ * on /strategy/[brand]. Planning work has no hero frame, so these buttons carry
+ * numbers instead of thumbnails. What someone wants from this screen is the
+ * scale of what is being run, and "24 planned dates" says that faster than a
+ * photograph of a calendar would.
+ *
+ * The case studies that used to render here still exist and are still reachable
+ * from /work. This page is the plans; those are the finished pieces.
  */
 
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import StrategyList from '../components/StrategyList.astro';
 import ContactFooter from '../components/ContactFooter.astro';
+import {
+  BRANDS,
+  BRAND_LABEL,
+  BRAND_PERIOD,
+  STRAND_LABEL,
+  STRANDS,
+} from '../content.config';
 
-const entries = await getCollection(
-  'work',
-  ({ data }) => !data.draft && data.section === 'strategy',
-);
+const plans = await getCollection('strategy', ({ data }) => !data.draft);
+
+const brands = BRANDS.map((key) => {
+  const mine = plans.filter((p) => p.data.brand === key);
+
+  /* Counted from the plans themselves so a brand can never advertise a number
+     its own page does not show. */
+  const dated = mine.reduce(
+    (n, p) => n + p.data.groups.reduce((m, g) => m + g.items.length, 0),
+    0,
+  );
+
+  return {
+    key,
+    label: BRAND_LABEL[key],
+    period: BRAND_PERIOD[key],
+    dated,
+    strands: STRANDS.filter((s) => mine.some((p) => p.data.strand === s)).map(
+      (s) => STRAND_LABEL[s],
+    ),
+  };
+});
 ---
 
 <Base
   title="Strategy / Cole SJ"
-  description="Content calendars, campaign planning and the brand channels I run day to day."
+  description="Planned content programmes for KEIS, SW-MOTECH and NEXX. Email seasons, video calendars and organic social, planned a year out."
   ground="corner"
 >
-  <StrategyList entries={entries} />
+  <section class="sz">
+    <header class="sz__head">
+      <a href="/" class="pill">Back</a>
+      <h1 class="sz__title bloom warp-sm">Strategy</h1>
+      <p class="sz__count label">{brands.length} brands</p>
+    </header>
+
+    <p class="sz__intro text-pretty">
+      The planning behind three of the brands I run. Email seasons, video
+      calendars and organic social, mapped out a year ahead rather than filled
+      in week to week.
+    </p>
+
+    <ul class="sz__grid">
+      {
+        brands.map((b) => (
+          <li>
+            <a class="sz__card" href={`/strategy/${b.key}`}>
+              <span class="sz__brand">{b.label}</span>
+              <span class="sz__period label">{b.period}</span>
+              <span class="sz__strands label">{b.strands.join(' / ')}</span>
+              {b.dated > 0 && (
+                <span class="sz__dated label">{b.dated} planned dates</span>
+              )}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
   <ContactFooter />
 </Base>
+
+<style>
+  .sz {
+    background-color: var(--color-corner);
+    padding: var(--spacing-gutter);
+    padding-block-end: var(--spacing-room);
+  }
+
+  .sz__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem 1.5rem;
+    margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
+  }
+
+  .sz__head a {
+    color: var(--color-bone);
+    text-decoration: none;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .sz__head a:hover {
+    background-color: var(--color-flare);
+    color: var(--color-bone);
+  }
+
+  .sz__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    color: var(--color-flare);
+    margin: 0;
+    margin-inline-end: auto;
+  }
+
+  .sz__count {
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  .sz__intro {
+    max-width: 52ch;
+    margin: 0 0 clamp(2rem, 6vh, 4rem);
+    font-size: var(--text-step-1);
+    opacity: 0.8;
+  }
+
+  .sz__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1rem, 2.5vw, 2rem);
+  }
+
+  /* Buttons rather than cards: there is no image to lead with, so the brand
+     name is the whole affordance and needs the weight of one. */
+  .sz__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    height: 100%;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    color: inherit;
+    text-decoration: none;
+    border: 1px solid color-mix(in srgb, var(--color-bone) 28%, transparent);
+    border-radius: 0.4rem;
+    transition:
+      background-color 220ms var(--ease-settle),
+      border-color 220ms var(--ease-settle);
+  }
+
+  .sz__card:hover,
+  .sz__card:focus-visible {
+    background-color: color-mix(in srgb, var(--color-flare) 12%, transparent);
+    border-color: var(--color-flare);
+  }
+
+  .sz__brand {
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    transition: color 200ms var(--ease-settle);
+  }
+
+  .sz__card:hover .sz__brand {
+    color: var(--color-flare);
+  }
+
+  .sz__period {
+    opacity: 0.55;
+  }
+
+  .sz__strands {
+    margin-top: 0.6rem;
+    opacity: 0.8;
+  }
+
+  .sz__dated {
+    color: var(--color-flare);
+  }
+
+  @media (max-width: 900px) {
+    .sz__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    .sz__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
