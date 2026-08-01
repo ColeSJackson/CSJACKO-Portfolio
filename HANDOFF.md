@@ -3,100 +3,87 @@
 Session notes for whoever (human or Claude) picks this up next. Project root
 is `/Users/mmmurdock/Documents/GitHub/CSJACKO Portfolio`.
 
-## What we were doing
+## Current state: the site is live and working
 
-Two threads today, in order:
+`https://csjacko.co.uk` serves the current build, HTTP 200, with both of the
+outstanding changes deployed. Verified by fetching the production domain
+directly and counting rendered elements: 16 favourite photos on `/shoot`,
+new intro copy on the homepage.
 
-1. **Recovering from a data-loss incident and getting the site live at
-   `csjacko.co.uk`.** The original project folder was found empty partway
-   through the session; the real code turned out to still exist in a second,
-   separate clone at this path (under `~/Documents/GitHub/`), which is why
-   this repo is the one that matters going forward, not
-   `~/Creative Portfolio CSJACKO`. From there: cleaned up git hygiene, got a
-   Vercel project properly deployed and aliased to the domain, and diagnosed
-   why the domain itself still wasn't resolving.
-2. **Site changes**: reordering `/shoot` to lead with 16 chosen photos spread
-   across all three grid columns, and replacing the homepage intro copy.
+## The big correction: the domain was never actually broken
 
-## Finished
+The previous session concluded that `csjacko.co.uk` "does not resolve for
+real visitors" because `dig` returned Palo Alto's sinkhole. **That conclusion
+was wrong.** Checked against public resolvers over DNS-over-HTTPS:
 
-- **Git repo cleaned up.** `.gitignore` added; `node_modules`, `dist`, and the
-  four raw source-media folders (`Photography 100/`, `Email Design/`,
-  `Paid social assets/`, `Reels Editing Work/`) are untracked but still
-  present locally. `.gitattributes` had stray shell commands pasted into it
-  by mistake (`git add .`, `gh repo create ...`) — removed, it's back to just
-  the LF-normalization line.
-- **Site is deployed and reachable**, just not yet at the custom domain (see
-  Broken). Deploy path is the Vercel CLI, run by the user directly:
-  `npx vercel --prod` from this directory. It's linked to the
-  `cole-sj1/csjacko-portfolio` Vercel project and aliases straight to
-  `csjacko.co.uk` on every run.
-- **`/shoot` favourites**: `src/pages/shoot.astro` now has a `FAVOURITES`
-  array of 16 filenames (Cole's picks) that render first, in a dedicated
-  3-column CSS Grid (`.ph__top`) so they spread one-per-column instead of
-  stacking in column one the way the masonry below it would. The remaining
-  ~69 photos keep the original column-masonry wall (`.ph__grid`), unchanged.
-  Verified locally: favourites confirmed landing in columns 1/2/3 in the
-  right order via DOM inspection and a local `astro preview` screenshot.
-- **Homepage intro rewritten**: `src/components/Hero.astro`'s
-  `.hero__intro` block now holds Cole's actual bio copy (three paragraphs:
-  bio, closing line, `- Cole SJ` signature). Caught and fixed my own mistake
-  mid-edit — first draft used an em dash for the signature, which breaks the
-  site's explicit no-em-dash rule; replaced with a plain hyphen.
-- **`CLAUDE.md`** written at the repo root (architecture reference for future
-  Claude sessions — not a today's-changes log, that's this file).
+    Google (dns.google)      -> 216.198.79.1   (Vercel)
+    Cloudflare (1.1.1.1)     -> 216.198.79.1   (Vercel)
+    Cole's local resolver    -> sinkhole.paloaltonetworks.com
 
-## Broken / outstanding
+The sinkhole is **local to Cole's own network**, not global. His network runs
+Palo Alto DNS Security, which was filtering the domain as "Parked". Everyone
+else on the internet has been reaching the site fine.
 
-- **`csjacko.co.uk` does not resolve for real visitors.** Not a code or
-  Vercel problem — confirmed via DNS lookup that the domain answers with
-  Palo Alto Networks' security sinkhole (`sinkhole.paloaltonetworks.com`) on
-  every record. Root cause found: Palo Alto's own URL-categorization tool
-  (`urlfiltering.paloaltonetworks.com`) has the domain filed as **"Parked"**,
-  which many networks block by policy regardless of its "Low-Risk" rating.
-  This is almost certainly because the domain was brand new (registered same
-  day, registrar is Fasthosts, confirmed no hold/suspension on their end) and
-  looked empty the first time it got crawled. Cole has submitted a
-  recategorization request through that tool. **Nothing left to do here but
-  wait** — check `dig A csjacko.co.uk` next session; if it still resolves to
-  the sinkhole, the request hasn't been reviewed yet.
-- **GitHub push is broken and unresolved.** This sandboxed environment can't
-  reach the macOS Keychain (`fatal: could not read Username for
-  'https://github.com'`), and the user's own Terminal attempt also failed for
-  reasons never captured (no error text was pasted back). The two git-hygiene
-  commits above exist **locally only** — `origin/main` on
-  `github.com/ColeSJackson/CSJACKO-Portfolio` is still on an older, possibly
-  divergent history (a `Delete README.md` commit appeared there that has no
-  local counterpart; never root-caused). Practical effect: there is currently
-  no push-to-deploy workflow. Every change has to be shipped by hand with
-  `npx vercel --prod`.
-- **Today's two site changes are not deployed yet.** The `/shoot` grid fix
-  and the new Hero intro copy are only built and verified locally — the last
-  confirmed live deployment predates both. Needs one more
-  `npx vercel --prod` run.
-- Pre-existing, not touched today: `src/config.ts`'s `linkedin` field is
-  still a placeholder URL, and the font licensing question flagged in
-  `CLAUDE.md` (Groovy Madness non-commercial, Alte Haas Grotesk requires its
-  bundled licence file) is still unresolved.
+Practical effect: if the site looks dead from Cole's machine but fine from
+mobile data, that is this, not an outage. To check the real site from the
+affected network, bypass local DNS:
 
-## Next
+    curl -I --resolve csjacko.co.uk:443:216.198.79.1 https://csjacko.co.uk/
 
-1. Run `npx vercel --prod` to actually ship today's `/shoot` and `Hero.astro`
-   changes.
-2. Re-check `csjacko.co.uk` (`dig A csjacko.co.uk`, or just visit it) —
-   confirm the Palo Alto recategorization has landed.
-3. Fix GitHub auth properly, ideally with GitHub Desktop (browser-based
-   login, sidesteps the Keychain block entirely) so push-triggered deploys
-   can replace the manual CLI workflow.
-4. Once GitHub push works again, reconcile local `main` with the diverged
-   `origin/main` before pushing — don't force-push blind.
+The Palo Alto recategorization request Cole submitted will clear the local
+block when it lands. Nothing to fix in code or in Vercel.
 
-## Files touched today
+## Finished this session
 
-- `.gitignore` — created
-- `.gitattributes` — cleaned up (stray shell commands removed)
-- `src/pages/shoot.astro` — favourites reorder, then split into
-  `.ph__top` (grid) + `.ph__grid` (masonry) sections
-- `src/components/Hero.astro` — intro paragraph copy replaced
-- `CLAUDE.md` — created
-- `HANDOFF.md` — created (this file)
+- **Deployed.** `npx vercel --prod` shipped the `/shoot` favourites grid and
+  the new Hero intro. Both confirmed live on the production domain.
+- **Git divergence resolved without a force-push.** `origin/main` held three
+  commits made through the GitHub web UI (a README deletion and two
+  "Add files via upload" dumps). Every file unique to them already existed in
+  this tree in a better place — `cv.pdf`/`favicon.svg` in `public/`,
+  `index.html`/`sitemap-*.xml` as build output in `dist/`, and the ten email
+  JPGs in `Email Design/`. So the merge used `-s ours`: local tree kept
+  verbatim, nothing taken from the uploads, and their history stays reachable
+  through the merge's second parent instead of being force-pushed away.
+  Branch is now **ahead 5, behind 0** — a plain `git push` will fast-forward.
+- **Repo hygiene**: three `.DS_Store` files that predated `.gitignore` were
+  still tracked; untracked them. Removed a duplicate `.env*` rule that was
+  re-ignoring `.env.example` by sitting after the `!.env.example` negation.
+- Build verified clean: 31 pages.
+
+## Outstanding
+
+- **Nothing has been pushed to GitHub yet.** This sandbox cannot reach the
+  macOS Keychain, so `git push` fails with `could not read Username`. The
+  repo is staged and conflict-free, waiting on one push. **GitHub Desktop is
+  already installed** at `/Applications/GitHub Desktop.app` — opening this
+  repo there and clicking Push is the whole fix. No force, no conflicts.
+- **No push-to-deploy yet.** The Vercel project is linked at the repo level
+  (`.vercel/repo.json`, project `csjacko-portfolio`) but not connected to the
+  GitHub repo, so deploys are manual via `npx vercel --prod`. Once the push
+  above works, connecting the repo in the Vercel dashboard under Settings ->
+  Git turns every push into a deploy automatically.
+- **Vercel Deployment Protection is on for preview URLs.** The
+  `*.vercel.app` deployment URLs redirect to a Vercel login. This does *not*
+  affect the production domain, which is public and returns 200. Worth
+  knowing so a protected preview URL is not mistaken for a broken deploy.
+- Pre-existing, untouched: `src/config.ts`'s `linkedin` field is still a
+  placeholder URL, and the font licensing question flagged in `CLAUDE.md`
+  (Groovy Madness non-commercial, Alte Haas Grotesk requires its bundled
+  licence file) is still unresolved.
+
+## Deploying, day to day
+
+Until push-to-deploy is connected, shipping is one command from this
+directory:
+
+    npx vercel --prod
+
+It builds, deploys, and aliases to `csjacko.co.uk` in one go. Vercel CLI is
+authenticated as `colesjackson`.
+
+## Files touched this session
+
+- `.gitignore` — removed the duplicate `.env*` rule, documented the `.vercel` entry
+- `src/.DS_Store`, `src/assets/.DS_Store`, `src/content/.DS_Store` — untracked
+- `HANDOFF.md` — rewritten (this file)
