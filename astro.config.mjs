@@ -3,9 +3,12 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
 
-// Static build, deploy target Cloudflare Pages or Netlify.
+// Static build, deployed to Vercel. Build settings are pinned in vercel.json
+// so CLI deploys and git-triggered deploys produce identical output.
 export default defineConfig({
-  site: 'https://csjacko.com',
+  // Must stay the live domain: the sitemap and canonical URLs are generated
+  // from it. This was .com (a domain we do not own) until 2026-08-01.
+  site: 'https://csjacko.co.uk',
   output: 'static',
   integrations: [sitemap()],
   // Pinned so the dev server does not collide with the default 4321, which
