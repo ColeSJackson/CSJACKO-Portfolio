@@ -7,19 +7,14 @@
  * collection: these are finished pieces to look at, not case studies with a
  * statement and an outcome.
  *
- * Two presentations, because the two bodies of work are shaped differently:
+ * Every category uses the shoot page's browsing pattern: a packed masonry of
+ * whole assets, click to open, arrows or swipe to move, escape out.
  *
- *   `wall` is the shoot page's browsing pattern, a packed masonry of whole
- *   assets. Paid social creative is a set of complete frames in mixed ratios
- *   and wants to be scanned that way.
- *
- *   `cards` is a square grid. An email design is 1080 by 5000-odd pixels, and
- *   a wall of those is a wall of slivers. Cropping each to a square anchored at
- *   the top shows every campaign's masthead at a consistent size, which is what
- *   makes the set scannable. The full artwork is one tap away in the lightbox.
- *
- * Both open the same viewer, so the browsing pattern matches the shoot page
- * either way: click, move with arrows or swipe, escape out.
+ * Emails are shown at full length rather than cropped to a tile. They are 1080
+ * by 5000-odd pixels, so the column is long, but that is the point: the work is
+ * the whole email, and scrolling one is how you read it. Two columns hold even
+ * on a phone, because a half-width email is still legible where a half-width
+ * photograph would not be.
  */
 
 import { Picture, getImage } from 'astro:assets';
@@ -43,9 +38,9 @@ const INTRO: Record<SubsectionKey, string> = {
 };
 
 /** Which presentation each category uses. See the note at the top. */
-const MODE: Record<SubsectionKey, 'wall' | 'cards'> = {
+const MODE: Record<SubsectionKey, 'wall'> = {
   'paid-social': 'wall',
-  email: 'cards',
+  email: 'wall',
   print: 'wall',
 };
 
@@ -133,7 +128,12 @@ const title = SUBSECTION_TITLE[category];
 
     {
       mode === 'wall' && items.length > 0 && (
-        <div class="dg__wall" data-masonry data-cols="3">
+        <div
+          class="dg__wall"
+          data-masonry
+          data-cols={category === 'email' ? 2 : 3}
+          data-cols-min="2"
+        >
           {items.map((item, i) => (
             <div
               class="dg__cell"
@@ -167,40 +167,6 @@ const title = SUBSECTION_TITLE[category];
       )
     }
 
-    {
-      mode === 'cards' && items.length > 0 && (
-        <ul class="dg__cards">
-          {items.map((item, i) => (
-            <li>
-              <button
-                type="button"
-                class="card"
-                data-shot
-                data-full={item.full.src}
-                data-alt={item.label}
-                data-caption={item.label}
-                aria-label={`Open full size: ${item.label}`}
-              >
-                <span class="card__media">
-                  <Picture
-                    src={item.src}
-                    alt={item.label}
-                    formats={['avif', 'webp']}
-                    fallbackFormat="jpg"
-                    widths={[400, 700, 1000]}
-                    sizes="(min-width: 1100px) 24vw, (min-width: 700px) 45vw, 92vw"
-                    loading={i < 4 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    class="card__img"
-                  />
-                </span>
-                <span class="card__name">{item.label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )
-    }
   </section>
 
   <Masonry />
@@ -218,10 +184,6 @@ const title = SUBSECTION_TITLE[category];
   }
 
   .dg__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 1rem 1.5rem;
     margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
   }
 
@@ -240,13 +202,11 @@ const title = SUBSECTION_TITLE[category];
 
   .dg__title {
     font-family: var(--font-display);
-    font-size: var(--text-step-3);
     line-height: 1;
     text-transform: uppercase;
     letter-spacing: -0.01em;
     color: var(--color-flare);
     margin: 0;
-    margin-inline-end: auto;
   }
 
   .dg__count {
@@ -296,82 +256,4 @@ const title = SUBSECTION_TITLE[category];
     opacity: 0.78;
   }
 
-  /* -- Cards: email ------------------------------------------------------ */
-
-  .dg__cards {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(0.9rem, 2vw, 1.6rem);
-  }
-
-  .card {
-    display: block;
-    width: 100%;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: inherit;
-    text-align: left;
-    cursor: zoom-in;
-  }
-
-  .card__media {
-    display: block;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    /* Generous radius, per the reference. Squares this size read as hard
-       tiles without it. */
-    border-radius: clamp(0.75rem, 1.6vw, 1.15rem);
-    background-color: var(--color-corner-lift);
-    border: 1px solid color-mix(in srgb, var(--color-bone) 12%, transparent);
-    transition:
-      border-color 220ms var(--ease-settle),
-      transform 320ms var(--ease-settle);
-  }
-
-  /* An email is four to five times taller than it is wide. Centred, a square
-     crop lands on a random band of body copy; anchored top it lands on the
-     masthead, which is the part that identifies the campaign. */
-  .card__img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top;
-  }
-
-  .card:hover .card__media,
-  .card:focus-visible .card__media {
-    border-color: var(--color-flare);
-    transform: translateY(-2px);
-  }
-
-  .card__name {
-    display: block;
-    margin-top: 0.7rem;
-    font-family: var(--font-display);
-    font-size: var(--text-step-0);
-    line-height: 1.15;
-    text-transform: uppercase;
-    letter-spacing: -0.005em;
-    transition: color 200ms var(--ease-settle);
-  }
-
-  .card:hover .card__name {
-    color: var(--color-flare);
-  }
-
-  @media (max-width: 1100px) {
-    .dg__cards {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 760px) {
-    .dg__cards {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
 </style>

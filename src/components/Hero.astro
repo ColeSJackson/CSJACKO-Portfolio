@@ -48,20 +48,33 @@ const DISCIPLINES = [
   </div>
 
   <div class="hero__foot">
-    <div class="hero__intro">
-      <p class="text-pretty">
-        Hey I&rsquo;m Cole! I&rsquo;m a super bubbly and creative Content and
-        Digital Marketing Executive. I currently work for Motohaus
-        Powersports, and their portfolio of 9 Motorcycle accessory brands.
-        Outside of my full time work, I run a freelance side hustle where I do
-        event/sport photography.
-      </p>
-      <p class="text-pretty">
-        I feel happiest when I have creative freedom, Check out my portfolio
-        while you&rsquo;re here!
-      </p>
-      <p class="hero__sign">- Cole SJ</p>
+    {/* Copy left, portrait right. The card is the only rounded, bordered
+        surface on the homepage, which is what lets it hold the two halves
+        together as one object rather than a paragraph beside a picture. */}
+    <div class="bio">
+      <div class="bio__copy">
+        <p class="text-pretty">
+          Hey I&rsquo;m Cole! I&rsquo;m a super bubbly and creative Content and
+          Digital Marketing Executive. I currently work for Motohaus
+          Powersports, and their portfolio of 9 Motorcycle accessory brands.
+          Outside of my full time work, I run a freelance side hustle where I do
+          event/sport photography.
+        </p>
+        <p class="text-pretty">
+          I feel happiest when I have creative freedom, Check out my portfolio
+          while you&rsquo;re here!
+        </p>
+        <p class="bio__sign">- Cole SJ</p>
+      </div>
+
+      {/* Holds the portrait's space so the card has its final proportions
+          before the photograph exists. Drop the image in and replace this
+          block; nothing else needs to move. */}
+      <div class="bio__portrait" aria-hidden="true">
+        <span class="bio__slot label">Photo of Cole</span>
+      </div>
     </div>
+
     <p class="label hero__scroll" aria-hidden="true">Scroll</p>
   </div>
 </section>
@@ -155,9 +168,8 @@ const DISCIPLINES = [
        sizes. */
     border: max(1px, 0.045em) solid var(--color-flare);
     border-radius: 0.32em;
-    /* Long enough to read as a wash between two saturated colours rather than
-       a swap. Red to green is a big hue move, so a short transition reads as
-       a flicker. */
+    /* Long enough to read as a wash rather than a swap. Red to blue is most of
+       the way round the wheel, so a short transition reads as a flicker. */
     transition:
       background-color 320ms var(--ease-settle),
       border-color 320ms var(--ease-settle),
@@ -166,9 +178,11 @@ const DISCIPLINES = [
 
   .hero__word:hover,
   .hero__word:focus-visible {
-    background-color: var(--color-moss);
-    border-color: var(--color-moss);
-    color: var(--color-bone);
+    background-color: var(--color-sky);
+    border-color: var(--color-sky);
+    /* Bone on this blue is roughly 1.6:1. Ink is 11:1, so the label flips
+       dark rather than staying pale and washing out. */
+    color: var(--color-ink);
   }
 
   .hero__foot {
@@ -184,27 +198,60 @@ const DISCIPLINES = [
     margin-top: clamp(1.25rem, 3.5vh, 2.75rem);
   }
 
-  .hero__intro {
-    /* Widened from a two-line tagline measure once this became a real
-       paragraph. Much narrower and it stacks into a thin ragged column. */
-    max-width: 52ch;
-    /* A step up from default body size. This is the only prose in the hero, so
-       it carries more weight than a normal paragraph would. */
-    font-size: var(--text-step-1);
-    color: var(--color-bone);
-    opacity: 0.75;
+  .bio {
+    display: grid;
+    /* Copy takes the larger share; the portrait is a companion, not a hero
+       image. */
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+    width: 100%;
+    max-width: 62rem;
     margin: 0 auto;
-    text-align: center;
+    padding: clamp(1.25rem, 2.5vw, 2rem);
+    border-radius: clamp(1rem, 2vw, 1.5rem);
+    background-color: color-mix(in srgb, var(--color-corner) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-bone) 14%, transparent);
+    /* The card sits over the drifting field, so it needs to sit on something
+       rather than let the blooms run through the copy. */
+    backdrop-filter: blur(6px);
   }
 
-  .hero__intro p {
+  .bio__copy {
+    font-size: var(--text-step-1);
+    color: var(--color-bone);
+    opacity: 0.85;
+    text-align: left;
+  }
+
+  .bio__copy p {
     margin: 0;
   }
 
-  /* The second line is the personal one. Giving it its own space rather than
-     running it on keeps it as a closing beat instead of a fourth clause. */
-  .hero__intro p + p {
+  .bio__copy p + p {
     margin-top: 0.9em;
+  }
+
+  .bio__sign {
+    margin-top: 1.1em !important;
+    opacity: 0.7;
+  }
+
+  /* 4:5 portrait, the same ratio the case study covers use. */
+  .bio__portrait {
+    aspect-ratio: 4 / 5;
+    display: grid;
+    place-items: center;
+    border-radius: clamp(0.75rem, 1.5vw, 1.1rem);
+    background-color: var(--color-corner-lift);
+    border: 1px dashed color-mix(in srgb, var(--color-bone) 22%, transparent);
+    overflow: hidden;
+  }
+
+  .bio__slot {
+    opacity: 0.45;
+    text-align: center;
+    padding: 0.5rem;
   }
 
   .hero__scroll {
@@ -219,6 +266,18 @@ const DISCIPLINES = [
   @media (max-width: 640px) {
     .hero__scroll {
       display: none;
+    }
+
+    .bio {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+    }
+
+    /* Portrait leads on a phone: the card is taller than the screen otherwise
+       and the photograph never gets seen. */
+    .bio__portrait {
+      order: -1;
+      aspect-ratio: 16 / 10;
     }
 
     /* No forced full height on a phone.

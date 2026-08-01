@@ -103,14 +103,28 @@ const dated = plans.reduce(
                       <li class="ec">
                         <p class="ec__title">{item.title}</p>
                         {item.date && <p class="ec__date">{item.date}</p>}
-                        {item.subject && (
-                          <p class="ec__subject text-pretty">{item.subject}</p>
-                        )}
-                        {(item.preview || item.note) && (
-                          <p class="ec__preview text-pretty">
-                            {item.preview ?? item.note}
-                          </p>
-                        )}
+                        {/* Placeholders until the real copy is written, so the
+                            card shows its full shape rather than looking
+                            half-built. Filling in `subject` and `preview` on
+                            the entry replaces them. */}
+                        <p
+                          class:list={[
+                            'ec__subject',
+                            'text-pretty',
+                            !item.subject && 'is-placeholder',
+                          ]}
+                        >
+                          {item.subject ?? 'SUBJECT LINE'}
+                        </p>
+                        <p
+                          class:list={[
+                            'ec__preview',
+                            'text-pretty',
+                            !(item.preview ?? item.note) && 'is-placeholder',
+                          ]}
+                        >
+                          {item.preview ?? item.note ?? 'PREVIEW TEXT'}
+                        </p>
                       </li>
                     ))}
                   </ul>
@@ -148,10 +162,6 @@ const dated = plans.reduce(
   }
 
   .bp__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 1rem 1.5rem;
     margin-bottom: clamp(2rem, 6vh, 4rem);
   }
 
@@ -170,13 +180,11 @@ const dated = plans.reduce(
 
   .bp__title {
     font-family: var(--font-display);
-    font-size: var(--text-step-3);
     line-height: 1;
     text-transform: uppercase;
     letter-spacing: -0.01em;
     color: var(--color-flare);
     margin: 0;
-    margin-inline-end: auto;
   }
 
   .bp__count {
@@ -387,6 +395,19 @@ const dated = plans.reduce(
     font-size: var(--text-step-0);
     line-height: 1.45;
     opacity: 0.6;
+  }
+
+  /* Unwritten copy reads as a slot, not as content: dotted rule, tracked caps,
+     dimmed. Obvious at a glance which cards still need writing. */
+  .is-placeholder {
+    font-family: var(--font-utility);
+    font-size: var(--text-step--1);
+    letter-spacing: 0.12em;
+    opacity: 0.32;
+    border-block-end: 1px dashed
+      color-mix(in srgb, var(--color-bone) 25%, transparent);
+    padding-block-end: 0.35rem;
+    align-self: start;
   }
 
   @media (max-width: 1100px) {

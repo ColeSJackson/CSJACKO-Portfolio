@@ -103,9 +103,11 @@
      placeholder generator so stand-in art sits in the same range as the rooms. */
   --color-flare-deep: #a81409;
 
-  /* Hover state for the hero's discipline buttons. Deep enough to read as a
-     deliberate second brand colour against the red rather than a tint of it. */
-  --color-moss: #08510c;
+  /* Hover state for the hero's discipline buttons. A light, bright blue: it is
+     the opposite side of the wheel from the red, so the swap reads as a real
+     change of state, and it is light enough that the bone label stays legible
+     without switching the text colour too. */
+  --color-sky: #5cc8ff;
   --color-corner-lift: #1b1b1e;
 
   /* -- Type ----------------------------------------------------------------
@@ -210,15 +212,20 @@
   body,
   .room-dark,
   .room-read,
-  .ph,
-  .sc,
-  .st,
-  .dz,
-  .sz,
-  .bp,
-  .rw {
+  .ph, /* shoot wall */
+  .sc, /* Section: shared section template */
+  .st, /* StrategyList */
+  .dz, /* design landing */
+  .dg, /* design category pages */
+  .sz, /* strategy landing */
+  .bp, /* strategy brand pages */
+  .rw, /* edit reel wall */
+  .ar, /* Archive */
+  .cs, /* work case study */
+  .contact {
     background-image: var(--grain);
   }
+
 
   /* The filter defs carrier. Present in the DOM, occupies nothing. */
   .filters {
@@ -458,6 +465,117 @@
   .room-read {
     background-color: var(--color-bone);
     color: var(--color-ink);
+  }
+
+  /* ---------------------------------------------------------------------
+     Page headers.
+
+     Every inner page carries the same furniture: a Back pill, the page title,
+     and a count. They were laid out as a flex row with the title pushed left
+     by margin-inline-end:auto, which left it small and hard against the Back
+     pill instead of reading as the page's title.
+
+     A three-column grid with equal 1fr flanks centres the title on the page
+     rather than in the leftover space, so it stays centred whatever the Back
+     label or the count happens to say. The utility text either side was at
+     step--2, small enough to read as chrome; both come up to step-0.
+
+     Declared globally rather than in each page's scoped styles so the seven
+     pages carrying this pattern cannot drift apart again. It lives in the
+     components layer, not base, because .pill and .label are declared here and
+     a later layer beats an earlier one regardless of specificity.
+     --------------------------------------------------------------------- */
+  .ph__head,
+  .rw__head,
+  .dz__head,
+  .dg__head,
+  .sz__head,
+  .bp__head,
+  .ar__head {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .ph__head > :last-child,
+  .rw__head > :last-child,
+  .dz__head > :last-child,
+  .dg__head > :last-child,
+  .sz__head > :last-child,
+  .bp__head > :last-child,
+  .ar__head > :last-child {
+    justify-self: end;
+    text-align: right;
+  }
+
+  /* The title sits in the middle column. Bigger, centred, same face and
+     colour as before. */
+  .ph__title,
+  .rw__title,
+  .dz__title,
+  .dg__title,
+  .sz__title,
+  .bp__title,
+  .ar__title {
+    font-size: var(--text-step-4);
+    text-align: center;
+    margin-inline: 0;
+    justify-self: center;
+  }
+
+  /* Back pill and the count. */
+  .ph__head .pill,
+  .rw__head .pill,
+  .dz__head .pill,
+  .dg__head .pill,
+  .sz__head .pill,
+  .bp__head .pill,
+  .ar__head .pill {
+    justify-self: start;
+    font-size: var(--text-step-0);
+    letter-spacing: 0.02em;
+    padding: 0.4em 0.9em;
+  }
+
+  .ph__count,
+  .rw__count,
+  .dz__count,
+  .dg__count,
+  .sz__count,
+  .bp__count,
+  .ar__count {
+    font-size: var(--text-step-0);
+    letter-spacing: 0.02em;
+  }
+
+  /* On a phone the three-column row cannot hold a display-size title between
+     two pieces of furniture. Title takes its own line, centred, with the
+     utility pair splitting the row above it. */
+  @media (max-width: 700px) {
+    .ph__head,
+    .rw__head,
+    .dz__head,
+    .dg__head,
+    .sz__head,
+    .bp__head,
+    .ar__head {
+      grid-template-columns: auto auto;
+      justify-content: space-between;
+      row-gap: 0.9rem;
+    }
+
+    .ph__title,
+    .rw__title,
+    .dz__title,
+    .dg__title,
+    .sz__title,
+    .bp__title,
+    .ar__title {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      font-size: var(--text-step-3);
+    }
   }
 }
 

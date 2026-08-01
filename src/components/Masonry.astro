@@ -46,11 +46,14 @@
   (() => {
     const grids = [];
 
+    /* data-cols is the desktop count; data-cols-min is the phone count, which
+       defaults to 1 but is 2 wherever two frames still read at that width. */
     function columnsFor(root) {
       const max = Number(root.dataset.cols || 3);
+      const min = Number(root.dataset.colsMin || 1);
       const w = window.innerWidth;
-      if (w <= 620) return 1;
-      if (w <= 1100) return Math.min(2, max);
+      if (w <= 620) return Math.min(min, max);
+      if (w <= 1100) return Math.min(Math.max(2, min), max);
       return max;
     }
 
@@ -111,18 +114,35 @@
       build(grid);
     });
 
-    /* Debounced on a timer rather than requestAnimationFrame. rAF is the usual
-       choice for this, but it is tied to the compositor and does not fire in
-       every environment, which turns a missed repack into a silently wrong
-       layout. A timeout runs anywhere and the repack is cheap: it only does
-       work when the column count actually changes. */
-    let timer = 0;
-    window.addEventListener('resize', () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        for (const grid of grids) build(grid);
-      }, 120);
+    function repackAll() {
+      for (const grid of grids) build(grid);
+    }
+
+    /* Two ways in, because the column count changing is the only thing that
+       matters here and `resize` is not a reliable way to hear about it.
+       matchMedia fires exactly on the breakpoints the layout cares about and
+       nowhere else, so it is the primary signal. The debounced resize stays as
+       a backstop for anything that changes width without crossing a query,
+       and orientationchange covers phones that rotate.
+
+       Debounced on a timer rather than requestAnimationFrame: rAF is tied to
+       the compositor and does not fire in every environment, which turns a
+       missed repack into a silently wrong layout. */
+    [620, 1100].forEach((bp) => {
+      const mq = window.matchMedia(`(max-width: ${bp}px)`);
+      const on = mq.addEventListener
+        ? mq.addEventListener.bind(mq, 'change')
+        : mq.addListener.bind(mq);
+      on(repackAll);
     });
+
+    let timer = 0;
+    const debounced = () => {
+      clearTimeout(timer);
+      timer = setTimeout(repackAll, 120);
+    };
+    window.addEventListener('resize', debounced);
+    window.addEventListener('orientationchange', debounced);
   })();
 </script>
 
