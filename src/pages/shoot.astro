@@ -174,6 +174,51 @@ const rest = paired.slice(FAVOURITES.length);
       }
     </ul>
 
+    {/* Shuffles the 16 picks on every load, so a repeat visitor never opens the
+        same wall twice. Scoped to this list only: the gallery below keeps its
+        order, and nothing crosses between the two.
+
+        `is:inline` is doing real work. A normal Astro <script> is bundled as a
+        deferred module, which runs after the parser has finished and the page
+        has painted, so the reorder would be a visible jump. Inline and
+        unbundled, this executes the moment the parser reaches it, while the
+        list above is complete but nothing has been painted yet. No layout
+        shift, no CLS, ~250 bytes, and no hydration anywhere on the page.
+
+        It also has to beat the lightbox, which snapshots [data-shot] order once
+        on init to drive its prev/next. Bundled modules run after inline script,
+        so the lightbox reads the shuffled order and its arrows match what is on
+        screen.
+
+        With JS off nothing runs and the picks render in their authored order,
+        which is a perfectly good page. */}
+    <script is:inline>
+      (() => {
+        const list = document.querySelector('.ph__top');
+        if (!list) return;
+
+        const items = [...list.children];
+        for (let i = items.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [items[i], items[j]] = [items[j], items[i]];
+        }
+        /* append() moves existing nodes rather than copying them, so the
+           buttons keep their listeners and the images keep any decode already
+           in flight. */
+        list.append(...items);
+
+        /* The eager/high hints were baked onto the first three at build time,
+           and those three are now somewhere else in the order. Re-point them at
+           whichever frames actually lead. */
+        items.forEach((li, i) => {
+          const img = li.querySelector('img');
+          if (!img) return;
+          img.loading = i < 3 ? 'eager' : 'lazy';
+          img.fetchPriority = i < 3 ? 'high' : 'auto';
+        });
+      })();
+    </script>
+
     <ul class="ph__grid">
       {
         rest.map(({ shot, full }) => (
