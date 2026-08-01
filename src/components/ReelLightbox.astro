@@ -1,0 +1,326 @@
+---
+/**
+ * Full-screen reel player.
+ *
+ * Separate from Lightbox rather than a mode inside it. A still swaps by setting
+ * one src; a video has to be paused, unloaded and rewound on every move or the
+ * previous clip keeps playing audio over the next one. Folding that into the
+ * image viewer would put video teardown in the path of every photograph on the
+ * shoot page.
+ *
+ * It listens for [data-reel], so both viewers can coexist on a page without
+ * either one claiming the other's triggers.
+ */
+---
+
+<dialog class="rl" data-reel-lightbox aria-label="Reel player">
+  <div class="rl__bar">
+    <p class="label rl__counter" data-rl-counter></p>
+    <button type="button" class="rl__close pill" data-rl-close>Close</button>
+  </div>
+
+  <figure class="rl__figure">
+    {/* preload="none" is load-bearing: these are 7 to 17MB each, and without it
+        every reel on the page would start downloading on first paint. Nothing
+        is fetched until someone opens one. */}
+    <video
+      class="rl__video"
+      data-rl-video
+      controls
+      playsinline
+      preload="none"></video>
+    <figcaption class="rl__caption label" data-rl-caption></figcaption>
+  </figure>
+
+  <button
+    type="button"
+    class="rl__nav rl__nav--prev"
+    data-rl-prev
+    aria-label="Previous reel"
+  >
+    <span aria-hidden="true">&#8592;</span>
+  </button>
+  <button
+    type="button"
+    class="rl__nav rl__nav--next"
+    data-rl-next
+    aria-label="Next reel"
+  >
+    <span aria-hidden="true">&#8594;</span>
+  </button>
+</dialog>
+
+<style>
+  .rl {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100svh;
+    max-height: 100svh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background-color: var(--color-corner);
+    color: var(--color-bone);
+    overflow: hidden;
+  }
+
+  .rl::backdrop {
+    background-color: color-mix(in srgb, var(--color-ink) 94%, transparent);
+  }
+
+  .rl__bar {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: var(--spacing-gutter);
+  }
+
+  .rl__counter {
+    margin: 0;
+    opacity: 0.7;
+  }
+
+  .rl__close {
+    background: none;
+    color: var(--color-bone);
+    cursor: pointer;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .rl__close:hover {
+    background-color: var(--color-bone);
+    color: var(--color-ink);
+  }
+
+  .rl__figure {
+    margin: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: calc(var(--spacing-gutter) * 2.5) var(--spacing-gutter);
+  }
+
+  /* These are 9:16. Height is the binding constraint on any landscape screen,
+     so it leads, and width follows to keep the frame intact. */
+  .rl__video {
+    max-height: 100%;
+    max-width: 100%;
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+    background-color: var(--color-ink);
+  }
+
+  .rl__caption {
+    margin: 0;
+    max-width: 60ch;
+    text-align: center;
+    opacity: 0.7;
+    text-transform: none;
+    letter-spacing: 0.04em;
+  }
+
+  .rl__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 3rem;
+    height: 3rem;
+    display: grid;
+    place-items: center;
+    background: none;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    color: var(--color-bone);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .rl__nav:hover {
+    background-color: var(--color-bone);
+    color: var(--color-ink);
+  }
+
+  .rl__nav--prev {
+    left: var(--spacing-gutter);
+  }
+
+  .rl__nav--next {
+    right: var(--spacing-gutter);
+  }
+
+  /* On a phone the video fills the screen, so side arrows would sit on top of
+     the footage and the native controls. They move to the bottom corners, and
+     swipe becomes the primary way through. */
+  @media (max-width: 640px) {
+    .rl__nav {
+      top: auto;
+      bottom: calc(var(--spacing-gutter) + 0.25rem);
+      transform: none;
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+
+    .rl__figure {
+      padding-inline: 0;
+    }
+
+    .rl__caption {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  interface Reel {
+    src: string;
+    title: string;
+  }
+
+  function init() {
+    const dialog = document.querySelector<HTMLDialogElement>(
+      '[data-reel-lightbox]',
+    );
+    const triggers = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[data-reel]'),
+    );
+    if (!dialog || !triggers.length) return;
+
+    const video = dialog.querySelector<HTMLVideoElement>('[data-rl-video]')!;
+    const caption = dialog.querySelector<HTMLElement>('[data-rl-caption]')!;
+    const counter = dialog.querySelector<HTMLElement>('[data-rl-counter]')!;
+
+    const reels: Reel[] = triggers.map((t) => ({
+      src: t.dataset.src ?? '',
+      title: t.dataset.title ?? '',
+    }));
+
+    let current = 0;
+    let opener: HTMLElement | null = null;
+
+    /* Swapping src alone leaves the old clip decoded and audible for a beat.
+       Pausing and clearing first is what makes moving between reels clean. */
+    function stop() {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+    }
+
+    function show(i: number) {
+      current = (i + reels.length) % reels.length;
+      const reel = reels[current];
+
+      stop();
+      video.src = reel.src;
+      video.poster = reel.src.replace(/\.mp4$/, '.jpg');
+      caption.textContent = reel.title;
+      counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(
+        reels.length,
+      ).padStart(2, '0')}`;
+
+      /* Opening is a user gesture, so sound is usually allowed. When a browser
+         refuses anyway, fall back to a muted autoplay rather than showing a
+         frozen first frame: the viewer can unmute from the native controls. */
+      video.muted = false;
+      video.play().catch(() => {
+        video.muted = true;
+        video.play().catch(() => {});
+      });
+    }
+
+    /* Every exit routes through here rather than through the dialog's own
+       `close` event. Audio outliving the viewer is the worst failure this
+       component has, and hanging teardown off one event makes it one missed
+       event away from happening. Belt and braces: `close` still calls stop()
+       below, and calling it twice costs nothing. */
+    function closeViewer() {
+      stop();
+      if (dialog.open) dialog.close();
+      opener?.focus();
+      opener = null;
+    }
+
+    triggers.forEach((trigger, i) => {
+      trigger.addEventListener('click', () => {
+        opener = trigger;
+        dialog.showModal();
+        show(i);
+      });
+    });
+
+    dialog
+      .querySelector('[data-rl-close]')!
+      .addEventListener('click', closeViewer);
+    dialog
+      .querySelector('[data-rl-prev]')!
+      .addEventListener('click', () => show(current - 1));
+    dialog
+      .querySelector('[data-rl-next]')!
+      .addEventListener('click', () => show(current + 1));
+
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        show(current - 1);
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        show(current + 1);
+      }
+    });
+
+    /* Horizontal swipe moves between reels. Guarded on the axis so a vertical
+       drag, which is how you scroll, never counts as a move. */
+    let startX = 0;
+    let startY = 0;
+
+    dialog.addEventListener(
+      'touchstart',
+      (event) => {
+        startX = event.changedTouches[0].clientX;
+        startY = event.changedTouches[0].clientY;
+      },
+      { passive: true },
+    );
+
+    dialog.addEventListener(
+      'touchend',
+      (event) => {
+        const dx = event.changedTouches[0].clientX - startX;
+        const dy = event.changedTouches[0].clientY - startY;
+        if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) {
+          show(dx < 0 ? current + 1 : current - 1);
+        }
+      },
+      { passive: true },
+    );
+
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) closeViewer();
+    });
+
+    /* Escape dismisses a native dialog without any of the handlers above
+       running, so it needs its own. `cancel` fires first and the close then
+       proceeds normally. */
+    dialog.addEventListener('cancel', () => stop());
+
+    dialog.addEventListener('close', () => stop());
+  }
+
+  init();
+  document.addEventListener('astro:after-swap', init);
+</script>

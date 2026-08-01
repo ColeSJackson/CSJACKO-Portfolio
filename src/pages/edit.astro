@@ -2,32 +2,267 @@
 /**
  * Edit. Reached from the word EDIT in the hero.
  *
- * Video is never committed to the repo, so each piece carries a poster image
- * and an external embed URL. The player loads nothing until someone presses
- * play.
+ * Laid out like the shoot page: a wall of frames you scroll, tap to open, and
+ * move through without going back. The difference is that every frame here is
+ * a poster over a real file rather than a still, and the grid is uniform
+ * because every reel is 9:16. Photographs vary in shape and need masonry;
+ * these do not, so a plain grid is the honest structure.
+ *
+ * The cuts are served from this site rather than a video host. That reverses
+ * the note this file used to carry, and it is deliberate: re-encoded for web
+ * the six clips are 78MB rather than 221MB, which is cheap enough to host
+ * directly, and it means a reel opens in place instead of handing the viewer
+ * off to a third party mid-portfolio.
+ *
+ * Add a reel by dropping the MP4 in public/reels and its poster in
+ * src/assets/reels under the same name. Nothing else needs editing.
  */
 
-import { getCollection } from 'astro:content';
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import Base from '../layouts/Base.astro';
-import Section from '../components/Section.astro';
+import ReelLightbox from '../components/ReelLightbox.astro';
 import ContactFooter from '../components/ContactFooter.astro';
 
-const entries = await getCollection(
-  'work',
-  ({ data }) => !data.draft && data.section === 'edit',
+const posters = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/reels/*.jpg',
+  { eager: true },
 );
+
+/* Titles are keyed off the filename so a new reel needs no code change. The
+   map only exists for names the filename cannot carry, like model numbers that
+   should stay uppercase. */
+const TITLES: Record<string, string> = {
+  'keis-reel-111': 'KEIS Reel 111',
+  'keis-reel-222': 'KEIS Reel 222',
+  'private-landing-edit': 'Private Landing Edit',
+  'reel-1': 'Reel 01',
+  'the-g601-unboxing': 'G601 Unboxing',
+  'the-new-g901-unboxing': 'G901 Unboxing',
+};
+
+/* Order is set here rather than alphabetically: the unboxings are the
+   strongest openers and alphabetical would bury them at the bottom. */
+const ORDER = [
+  'the-new-g901-unboxing',
+  'the-g601-unboxing',
+  'keis-reel-111',
+  'private-landing-edit',
+  'keis-reel-222',
+  'reel-1',
+];
+
+const reels = Object.entries(posters)
+  .map(([path, mod]) => {
+    const slug = path.split('/').pop()!.replace(/\.jpg$/, '');
+    return {
+      slug,
+      poster: mod.default,
+      src: `/reels/${slug}.mp4`,
+      title: TITLES[slug] ?? slug.replace(/-/g, ' '),
+    };
+  })
+  .sort((a, b) => {
+    const ai = ORDER.indexOf(a.slug);
+    const bi = ORDER.indexOf(b.slug);
+    /* Anything not named in ORDER falls to the end in filename order, so a
+       newly dropped reel appears rather than vanishing. */
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return a.slug.localeCompare(b.slug);
+  });
 ---
 
 <Base
   title="Edit / Cole SJ"
-  description="Video work. Brand films, product films, reels and same-night fight recaps."
+  description="Video work by Cole SJ. Product films, unboxings and social reels, shot and cut end to end."
   ground="corner"
 >
-  <Section
-    title="Edit"
-    entries={entries}
-    unit="pieces"
-    intro="Brand and product films, social reels and same-night fight recaps. Shot and cut end to end."
-  />
+  <section class="rw">
+    <header class="rw__head">
+      <a href="/" class="pill">Back</a>
+      <h1 class="rw__title bloom warp-sm">Edit</h1>
+      <p class="rw__count label">{reels.length} reels</p>
+    </header>
+
+    <ul class="rw__grid">
+      {
+        reels.map((reel, i) => (
+          <li class="rw__cell">
+            <button
+              type="button"
+              class="rw__shot"
+              data-reel
+              data-src={reel.src}
+              data-title={reel.title}
+              aria-label={`Play: ${reel.title}`}
+            >
+              <Picture
+                src={reel.poster}
+                alt={`Still from ${reel.title}`}
+                formats={['avif', 'webp']}
+                fallbackFormat="jpg"
+                widths={[320, 500, 760]}
+                sizes="(min-width: 1100px) 30vw, (min-width: 700px) 45vw, 92vw"
+                loading={i < 3 ? 'eager' : 'lazy'}
+                decoding="async"
+                class="rw__img"
+              />
+              <span class="rw__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22">
+                  <path d="M8 5v14l11-7z" fill="currentColor" />
+                </svg>
+              </span>
+              <span class="rw__label label">{reel.title}</span>
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <ReelLightbox />
   <ContactFooter />
 </Base>
+
+<style>
+  .rw {
+    /* Matches the shoot wall, so the two sections read as one system. */
+    --rw-gap: clamp(0.3rem, 0.7vw, 0.62rem);
+
+    background-color: var(--color-corner);
+    padding: var(--spacing-gutter);
+    padding-block-end: var(--spacing-room);
+  }
+
+  .rw__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem 1.5rem;
+    margin-bottom: clamp(2rem, 6vh, 4rem);
+  }
+
+  .rw__head a {
+    color: inherit;
+    text-decoration: none;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .rw__head a:hover {
+    background-color: var(--color-bone);
+    color: var(--color-ink);
+  }
+
+  .rw__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    margin: 0;
+    margin-inline-end: auto;
+  }
+
+  .rw__count {
+    opacity: 0.6;
+    margin: 0;
+  }
+
+  /* A plain grid, not the masonry the shoot page needs. Every reel is 9:16, so
+     there are no varying heights to pack around. */
+  .rw__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--rw-gap);
+  }
+
+  .rw__shot {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    line-height: 0;
+    overflow: hidden;
+  }
+
+  .rw__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition:
+      opacity 240ms var(--ease-settle),
+      transform 400ms var(--ease-settle);
+  }
+
+  .rw__shot:hover .rw__img,
+  .rw__shot:focus-visible .rw__img {
+    opacity: 0.72;
+    transform: scale(1.02);
+  }
+
+  /* The affordance has to be permanent. A hover-only play badge is invisible on
+     every touch device, which is where most of these will be watched. */
+  .rw__play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--color-bone) 70%, transparent);
+    background-color: color-mix(in srgb, var(--color-ink) 45%, transparent);
+    color: var(--color-bone);
+    backdrop-filter: blur(2px);
+    padding-left: 0.15rem;
+    transition:
+      background-color 220ms var(--ease-settle),
+      border-color 220ms var(--ease-settle);
+  }
+
+  .rw__shot:hover .rw__play,
+  .rw__shot:focus-visible .rw__play {
+    background-color: var(--color-flare);
+    border-color: var(--color-flare);
+  }
+
+  .rw__label {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    padding: 2.5rem 0.75rem 0.6rem;
+    text-align: left;
+    line-height: 1.2;
+    color: var(--color-bone);
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--color-ink) 78%, transparent),
+      transparent
+    );
+  }
+
+  @media (max-width: 1100px) {
+    .rw__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 620px) {
+    .rw__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

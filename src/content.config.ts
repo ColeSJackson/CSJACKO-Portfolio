@@ -115,10 +115,15 @@ const work = defineCollection({
         preview: z.string().optional(),
         poster: image(),
         alt: z.string(),
-        /* The real cut, hosted externally. Video is never committed to the
-           repo: the files are tens of megabytes each, above the per-file limit
-           on most static hosts, and serving them ourselves would mean paying
-           for bandwidth a video host gives away.
+        /* The real cut, hosted externally. Long-form video stays off the repo:
+           a full film is hundreds of megabytes, and serving it ourselves would
+           mean paying for bandwidth a video host gives away.
+
+           Short vertical reels are the exception and live in public/reels,
+           served by this site. Re-encoded for web they are single-digit
+           megabytes each, which is cheap enough to host directly, and it keeps
+           the viewer on the site instead of handing them to a third party
+           mid-portfolio. See src/pages/edit.astro.
 
            `embed` is a YouTube or Vimeo URL that the player swaps in when
            someone presses play. `href` is the plain link-out fallback. */
