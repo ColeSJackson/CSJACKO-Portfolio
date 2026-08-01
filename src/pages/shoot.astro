@@ -24,6 +24,7 @@ import { Picture, getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import Base from '../layouts/Base.astro';
 import Lightbox from '../components/Lightbox.astro';
+import Masonry from '../components/Masonry.astro';
 import ContactFooter from '../components/ContactFooter.astro';
 
 const modules = import.meta.glob<{ default: ImageMetadata }>(
@@ -143,10 +144,10 @@ const rest = paired.slice(FAVOURITES.length);
       <p class="ph__count label">{shots.length} frames</p>
     </header>
 
-    <ul class="ph__top">
+    <div class="ph__top" data-masonry data-shuffle data-cols="3">
       {
         favourites.map(({ shot, full }, i) => (
-          <li class="ph__top-cell">
+          <div class="ph__top-cell" data-mas-item data-ar={shot.src.height / shot.src.width}>
             <button
               type="button"
               class="ph__shot"
@@ -169,60 +170,15 @@ const rest = paired.slice(FAVOURITES.length);
                 class="ph__img"
               />
             </button>
-          </li>
+          </div>
         ))
       }
-    </ul>
+    </div>
 
-    {/* Shuffles the 16 picks on every load, so a repeat visitor never opens the
-        same wall twice. Scoped to this list only: the gallery below keeps its
-        order, and nothing crosses between the two.
-
-        `is:inline` is doing real work. A normal Astro <script> is bundled as a
-        deferred module, which runs after the parser has finished and the page
-        has painted, so the reorder would be a visible jump. Inline and
-        unbundled, this executes the moment the parser reaches it, while the
-        list above is complete but nothing has been painted yet. No layout
-        shift, no CLS, ~250 bytes, and no hydration anywhere on the page.
-
-        It also has to beat the lightbox, which snapshots [data-shot] order once
-        on init to drive its prev/next. Bundled modules run after inline script,
-        so the lightbox reads the shuffled order and its arrows match what is on
-        screen.
-
-        With JS off nothing runs and the picks render in their authored order,
-        which is a perfectly good page. */}
-    <script is:inline>
-      (() => {
-        const list = document.querySelector('.ph__top');
-        if (!list) return;
-
-        const items = [...list.children];
-        for (let i = items.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [items[i], items[j]] = [items[j], items[i]];
-        }
-        /* append() moves existing nodes rather than copying them, so the
-           buttons keep their listeners and the images keep any decode already
-           in flight. */
-        list.append(...items);
-
-        /* The eager/high hints were baked onto the first three at build time,
-           and those three are now somewhere else in the order. Re-point them at
-           whichever frames actually lead. */
-        items.forEach((li, i) => {
-          const img = li.querySelector('img');
-          if (!img) return;
-          img.loading = i < 3 ? 'eager' : 'lazy';
-          img.fetchPriority = i < 3 ? 'high' : 'auto';
-        });
-      })();
-    </script>
-
-    <ul class="ph__grid">
+    <div class="ph__grid" data-masonry data-cols="3">
       {
         rest.map(({ shot, full }) => (
-          <li class="ph__cell" data-span={shot.span}>
+          <div class="ph__cell" data-mas-item data-ar={shot.src.height / shot.src.width}>
             <button
               type="button"
               class="ph__shot"
@@ -244,12 +200,13 @@ const rest = paired.slice(FAVOURITES.length);
                 class="ph__img"
               />
             </button>
-          </li>
+          </div>
         ))
       }
-    </ul>
+    </div>
   </section>
 
+  <Masonry />
   <Lightbox />
   <ContactFooter />
 </Base>
@@ -307,51 +264,18 @@ const rest = paired.slice(FAVOURITES.length);
     margin: 0;
   }
 
-  /* Favourites used to be a row-flow CSS Grid, to spread the picks one per
-     column instead of stacking them down column one. It did spread them, but
-     grid rows are as tall as their tallest cell, so every short frame sat in a
-     pocket of dead space: measured at 1440px, gaps inside this block ran to
-     347px against the 14px the block actually declared, 1918px of emptiness
-     across 16 images. That is what made the page read as separated blocks.
-
-     Multi-column fixes it at the root. Each column is packed independently, so
-     a frame's neighbours never dictate its spacing and the only vertical gap is
-     the one set here. Column-major reading order is the trade, and it costs
-     nothing: these 16 are a set, not a sequence.
-
-     The stacking that made grid necessary in the first place is not a risk
-     here. That happened when the favourites were the first 16 of one 85-image
-     list, tall enough for column one to swallow them all. With their own
-     container, 16 items balance across the three columns. */
+  /* Both walls are packed by Masonry, which assigns columns explicitly. See
+     that component for why neither CSS grid nor CSS multi-column can do this
+     without leaving holes. All this file supplies is the gap and the block
+     separation; the flex structure lives with the component. */
   .ph__top {
-    list-style: none;
+    --mas-gap: var(--ph-gap);
     margin: 0 0 var(--ph-block-gap);
-    padding: 0;
-    columns: 3;
-    column-gap: var(--ph-gap);
   }
 
-  /* Column masonry rather than a row grid, because columns let every frame keep
-     its own height. A row grid would force a shared row height and start
-     cropping, which is the one thing this page must not do. */
   .ph__grid {
-    list-style: none;
+    --mas-gap: var(--ph-gap);
     margin: 0;
-    padding: 0;
-    columns: 3;
-    column-gap: var(--ph-gap);
-  }
-
-  .ph__top-cell,
-  .ph__cell {
-    break-inside: avoid;
-    margin-bottom: var(--ph-gap);
-  }
-
-  /* Landscape frames break the column rhythm on purpose. In a wall of mostly
-     portrait work they are the thing that stops it reading as a tidy grid. */
-  .ph__cell[data-span='2'] {
-    column-span: none;
   }
 
   .ph__shot {
@@ -378,17 +302,4 @@ const rest = paired.slice(FAVOURITES.length);
     opacity: 0.78;
   }
 
-  @media (max-width: 1100px) {
-    .ph__top,
-    .ph__grid {
-      columns: 2;
-    }
-  }
-
-  @media (max-width: 620px) {
-    .ph__top,
-    .ph__grid {
-      columns: 1;
-    }
-  }
 </style>

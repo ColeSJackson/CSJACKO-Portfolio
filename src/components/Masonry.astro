@@ -1,0 +1,147 @@
+---
+/**
+ * Gap-free column masonry, plus the optional shuffle that rides with it.
+ *
+ * Drop this once on any page holding a [data-masonry] list. Every direct child
+ * marked [data-mas-item] needs a data-ar of height/width; add data-shuffle to a
+ * list whose items should be randomised on each load.
+ *
+ * WHY THIS EXISTS
+ *
+ * Three arrangements were tried on the photo wall first, and all three leave
+ * holes:
+ *
+ *   A row-flow CSS Grid sizes every row to its tallest cell, so short frames
+ *   sit in pockets of dead space, measured at up to 347px.
+ *
+ *   CSS multi-column removes that, but `columns` balances by height and will
+ *   not split an item, so a tall frame that does not fit the remainder of a
+ *   column jumps to the next and leaves the hole behind it.
+ *
+ *   Grid with row spans fails the same way: auto-placement runs a cursor that
+ *   never goes backwards, so a tall item can strand a slot nothing can fill.
+ *
+ * None of those is a spacing problem, so none is fixable by tuning a gap. The
+ * only arrangement that cannot leave a hole is one where every column is an
+ * independent vertical stack, which means assigning columns explicitly instead
+ * of asking the browser to infer them. Placement is shortest-column-first by
+ * accumulated aspect ratio, the standard greedy fit, which lands the columns
+ * within about a frame of each other.
+ *
+ * WHY IT IS INLINE
+ *
+ * A bundled Astro script is a deferred module: it runs after the parser has
+ * finished and the page has painted, so both the shuffle and the repack would
+ * be visible jumps. Inline and unbundled, this runs the moment the parser
+ * reaches it, with the lists complete and nothing painted yet. Aspect ratios
+ * come from build-time metadata, so it never waits on an image to decode.
+ * Measured CLS on the shoot page is 0.
+ *
+ * With JS off the lists render as authored, in source order, one column. That
+ * is a plain wall of photographs rather than a broken page.
+ */
+---
+
+<script is:inline>
+  (() => {
+    const grids = [];
+
+    function columnsFor(root) {
+      const max = Number(root.dataset.cols || 3);
+      const w = window.innerWidth;
+      if (w <= 620) return 1;
+      if (w <= 1100) return Math.min(2, max);
+      return max;
+    }
+
+    function build(grid) {
+      const cols = columnsFor(grid.root);
+      /* The arrangement only changes when the column count does, so a resize
+         that stays inside a breakpoint costs nothing. */
+      if (cols === grid.cols && grid.root.childElementCount) return;
+      grid.cols = cols;
+
+      const columns = [];
+      const heights = [];
+      for (let i = 0; i < cols; i++) {
+        const col = document.createElement('div');
+        col.className = 'mas__col';
+        columns.push(col);
+        heights.push(0);
+      }
+
+      for (const item of grid.items) {
+        /* Aspect ratio is height over width, so at a fixed column width it is
+           directly proportional to rendered height. Comparing accumulated
+           ratios is comparing column heights, without measuring anything. */
+        const ar = Number(item.dataset.ar) || 1;
+        let shortest = 0;
+        for (let i = 1; i < cols; i++) {
+          if (heights[i] < heights[shortest]) shortest = i;
+        }
+        columns[shortest].appendChild(item);
+        heights[shortest] += ar;
+      }
+
+      grid.root.replaceChildren(...columns);
+    }
+
+    document.querySelectorAll('[data-masonry]').forEach((root) => {
+      const items = Array.from(root.querySelectorAll('[data-mas-item]'));
+      if (!items.length) return;
+
+      /* Shuffle before packing, so the new order is what gets distributed. */
+      if (root.hasAttribute('data-shuffle')) {
+        for (let i = items.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [items[i], items[j]] = [items[j], items[i]];
+        }
+        /* Priority hints were baked onto the first three at build time and
+           those frames are now elsewhere. Re-point them at whatever leads. */
+        items.forEach((item, i) => {
+          const img = item.querySelector('img');
+          if (!img) return;
+          img.loading = i < 3 ? 'eager' : 'lazy';
+          img.fetchPriority = i < 3 ? 'high' : 'auto';
+        });
+      }
+
+      const grid = { root, items, cols: 0 };
+      grids.push(grid);
+      build(grid);
+    });
+
+    /* Debounced on a timer rather than requestAnimationFrame. rAF is the usual
+       choice for this, but it is tied to the compositor and does not fire in
+       every environment, which turns a missed repack into a silently wrong
+       layout. A timeout runs anywhere and the repack is cheap: it only does
+       work when the column count actually changes. */
+    let timer = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        for (const grid of grids) build(grid);
+      }, 120);
+    });
+  })();
+</script>
+
+<style is:global>
+  /* The root is the row of columns; each column is a plain vertical stack.
+     Gap is supplied by whichever page uses this, via --mas-gap. */
+  [data-masonry] {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--mas-gap, 0.6rem);
+  }
+
+  [data-masonry] .mas__col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mas-gap, 0.6rem);
+    /* Equal widths regardless of content, and min-width:0 so a wide image
+       cannot push its column past its share. */
+    flex: 1 1 0;
+    min-width: 0;
+  }
+</style>

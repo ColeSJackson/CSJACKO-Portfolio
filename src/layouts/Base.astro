@@ -6,6 +6,7 @@ import '../styles/global.css';
    one preloaded, because it is the site default. */
 import groovyFont from '../assets/fonts/groovy-madness.woff2?url';
 import textFont from '../assets/fonts/alte-haas-bold.woff2?url';
+import SiteLogo from '../components/SiteLogo.astro';
 
 interface Props {
   title: string;
@@ -16,12 +17,19 @@ interface Props {
    * `corner` and `bone` are solid rooms that cover it.
    */
   ground?: 'ink' | 'corner' | 'bone';
+  /**
+   * The centred CSJACKO mark linking home. On by default so a page added
+   * later gets it without anyone remembering to ask; home opts out, because
+   * it already opens on the full lockup.
+   */
+  logo?: boolean;
 }
 
 const {
   title,
   description = 'Cole SJ. Content and digital marketing. Photography, video, design and planning for nine powersports brands, and combat sports work as CSJACKO.',
   ground = 'ink',
+  logo = true,
 } = Astro.props;
 
 /* `ink` is deliberately transparent, not a black fill: the field behind it is
@@ -135,6 +143,8 @@ const GROUND_CLASS = {
     >
       Skip to content
     </a>
+
+    {logo && <SiteLogo />}
 
     <main id="main">
       <slot />

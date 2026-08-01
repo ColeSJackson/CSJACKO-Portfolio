@@ -102,6 +102,10 @@
      the far stop of the background gradient; corner-lift is mirrored by the
      placeholder generator so stand-in art sits in the same range as the rooms. */
   --color-flare-deep: #a81409;
+
+  /* Hover state for the hero's discipline buttons. Deep enough to read as a
+     deliberate second brand colour against the red rather than a tint of it. */
+  --color-moss: #08510c;
   --color-corner-lift: #1b1b1e;
 
   /* -- Type ----------------------------------------------------------------
@@ -166,40 +170,54 @@
 
   /* Film grain.
 
-     Screened on, because multiply against black is invisible. The trick to
-     getting heavy grain without hazing the blacks grey is the gamma transfer
-     inside the noise: it crushes the midtones so most of the tile is near
-     black (screening black changes nothing) and only the highlights survive as
-     bright specks. That gives punchy, sparse grain instead of a flat lift.
+     THE RULE: grain belongs to background surfaces only. Never to an img, a
+     video, or any container holding one. Grain over a photograph does not read
+     as film, it reads as a low-quality JPEG, and it undermines the thing the
+     site exists to show.
 
-     One fixed tile over the whole document, so it does not repaint on scroll
-     and costs nothing per section. */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    pointer-events: none;
-    opacity: 0.5;
-    mix-blend-mode: screen;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' exponent='2.8'/%3E%3CfeFuncG type='gamma' exponent='2.8'/%3E%3CfeFuncB type='gamma' exponent='2.8'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+     This is enforced structurally rather than by exception, because the
+     exception version kept regressing. It used to be a fixed overlay at
+     z-index 60 with mix-blend-mode: screen, and media escaped it only by being
+     named in an allowlist and pushed to z-index 61. That list held three
+     selectors and had to be extended by hand for every new component. Anything
+     added later, the design thumbnails and the reel wall among them, silently
+     got grain baked over it.
+
+     Now the noise is a background-image, so CSS painting order does the work:
+     an element's background always paints behind its content. Media inside a
+     grained surface is clean by construction, and a new component cannot
+     regress this because there is nothing to remember to opt out of.
+
+     Making that possible meant moving the effect from the blend mode into the
+     tile's alpha channel. The old tile was opaque, near-black with bright
+     specks, and relied on `screen` to drop the blacks. The final feColorMatrix
+     below rewrites it as white specks on transparency: RGB is forced to white
+     and alpha is taken from luminance, so the dark majority of the tile
+     becomes fully transparent and only the highlights survive. Composited over
+     the surface colour that reads identically to the old screen blend, with no
+     blend mode and no stacking context. The luminance coefficients are scaled
+     to about a fifth to carry the opacity the overlay used to apply. */
+  :root {
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' exponent='2.8'/%3E%3CfeFuncG type='gamma' exponent='2.8'/%3E%3CfeFuncB type='gamma' exponent='2.8'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.18 0.18 0.18 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* Photographs sit ABOVE the grain.
+  /* Every opaque surface on the site carries the texture. These are page and
+     section grounds, never media wrappers.
 
-     The texture belongs to the page surface, not to the work. Grain laid over a
-     photograph does not read as film, it reads as a low-quality JPEG, and it
-     actively undermines the thing the site exists to show.
-
-     The overlay is z-index 60, so anything given a higher index paints after it
-     and is therefore excluded from its backdrop, which is what mix-blend-mode
-     composites against. The modal lightbox needs no rule: a native <dialog>
-     renders in the browser's top layer, above every z-index on the page. */
-  .fig,
-  .ph__shot,
-  .cs__cover {
-    position: relative;
-    z-index: 61;
+     Adding a surface and forgetting it here costs a little texture on one
+     section. That is the right way round: the old arrangement failed by
+     painting grain over photographs, which is the failure that matters. */
+  body,
+  .room-dark,
+  .room-read,
+  .ph,
+  .sc,
+  .st,
+  .dz,
+  .sz,
+  .bp,
+  .rw {
+    background-image: var(--grain);
   }
 
   /* The filter defs carrier. Present in the DOM, occupies nothing. */

@@ -2,18 +2,31 @@
 /**
  * The three design category pages, from one template.
  *
- * /design/paid-social, /design/email and /design/print are the same page with a
- * different filter. They are generated from SUBSECTIONS rather than written out
- * three times, so adding a category is a one-line change in content.config and
- * a thumbnail on the /design landing page.
+ * Assets come straight from src/assets/design/<category>, so adding work is a
+ * matter of dropping exports in the folder. Nothing here reads the work
+ * collection: these are finished pieces to look at, not case studies with a
+ * statement and an outcome.
  *
- * Back goes to /design rather than home: these are one level down, and sending
- * someone to the homepage from here would lose the category they were in.
+ * Two presentations, because the two bodies of work are shaped differently:
+ *
+ *   `wall` is the shoot page's browsing pattern, a packed masonry of whole
+ *   assets. Paid social creative is a set of complete frames in mixed ratios
+ *   and wants to be scanned that way.
+ *
+ *   `cards` is a square grid. An email design is 1080 by 5000-odd pixels, and
+ *   a wall of those is a wall of slivers. Cropping each to a square anchored at
+ *   the top shows every campaign's masthead at a consistent size, which is what
+ *   makes the set scannable. The full artwork is one tap away in the lightbox.
+ *
+ * Both open the same viewer, so the browsing pattern matches the shoot page
+ * either way: click, move with arrows or swipe, escape out.
  */
 
-import { getCollection } from 'astro:content';
+import { Picture, getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import Base from '../../layouts/Base.astro';
-import Section from '../../components/Section.astro';
+import Masonry from '../../components/Masonry.astro';
+import Lightbox from '../../components/Lightbox.astro';
 import ContactFooter from '../../components/ContactFooter.astro';
 import {
   SUBSECTIONS,
@@ -26,12 +39,16 @@ const INTRO: Record<SubsectionKey, string> = {
     'Scroll-stopping creative for Meta and TikTok, built to be tested rather than admired.',
   email:
     'Campaign and lifecycle email design, from one-off sends to flows that keep running.',
-  print:
-    'Stand graphics, printed collateral and the physical side of a launch.',
+  print: 'Stand graphics, printed collateral and the physical side of a launch.',
 };
 
-/* Named per category rather than one generic line, so an empty page still says
-   what belongs there. */
+/** Which presentation each category uses. See the note at the top. */
+const MODE: Record<SubsectionKey, 'wall' | 'cards'> = {
+  'paid-social': 'wall',
+  email: 'cards',
+  print: 'wall',
+};
+
 const EMPTY: Record<SubsectionKey, string> = {
   'paid-social': 'Nothing here yet. This is where the paid social work will live.',
   email: 'Nothing here yet. This is where the email campaign work will live.',
@@ -44,12 +61,54 @@ export function getStaticPaths() {
 
 const { category } = Astro.params as { category: SubsectionKey };
 
-const entries = await getCollection(
-  'work',
-  ({ data }) =>
-    !data.draft && data.section === 'design' && data.subsection === category,
+/* Globs must be static, so all three are collected and the right one picked
+   rather than interpolating the category into the pattern. */
+const ALL = {
+  'paid-social': import.meta.glob<{ default: ImageMetadata }>(
+    '../../assets/design/paid-social/*.{jpg,jpeg,png}',
+    { eager: true },
+  ),
+  email: import.meta.glob<{ default: ImageMetadata }>(
+    '../../assets/design/email/*.{jpg,jpeg,png}',
+    { eager: true },
+  ),
+  print: import.meta.glob<{ default: ImageMetadata }>(
+    '../../assets/design/print/*.{jpg,jpeg,png}',
+    { eager: true },
+  ),
+};
+
+/* Filenames carry the campaign. Turning that into a label gives every asset
+   usable alt text and a lightbox caption without per-file frontmatter. */
+function labelFor(path: string): string {
+  return path
+    .split('/')
+    .pop()!
+    .replace(/\.[^.]+$/, '')
+    .split('-')
+    .filter(Boolean)
+    .map((w) => (/^\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ');
+}
+
+const mode = MODE[category];
+
+const assets = Object.entries(ALL[category])
+  .sort(([a], [b]) => a.localeCompare(b, 'en', { numeric: true }))
+  .map(([path, mod]) => ({
+    src: mod.default,
+    label: labelFor(path),
+  }));
+
+/* One larger variant per asset for the viewer, so the grid never has to load a
+   full-size file and the lightbox costs a single request. */
+const fulls = await Promise.all(
+  assets.map((a) =>
+    getImage({ src: a.src, format: 'webp', width: 1400, quality: 82 }),
+  ),
 );
 
+const items = assets.map((a, i) => ({ ...a, full: fulls[i] }));
 const title = SUBSECTION_TITLE[category];
 ---
 
@@ -58,32 +117,261 @@ const title = SUBSECTION_TITLE[category];
   description={INTRO[category]}
   ground="corner"
 >
-  <Section
-    title={title}
-    entries={entries}
-    unit={entries.length === 1 ? 'piece' : 'pieces'}
-    intro={INTRO[category]}
-    backHref="/design"
-    backLabel="Design"
-  >
+  <section class="dg">
+    <header class="dg__head">
+      <a href="/design" class="pill">Design</a>
+      <h1 class="dg__title bloom warp-sm">{title}</h1>
+      <p class="dg__count label">
+        {items.length}
+        {items.length === 1 ? 'piece' : 'pieces'}
+      </p>
+    </header>
+
+    <p class="dg__intro text-pretty">{INTRO[category]}</p>
+
+    {items.length === 0 && <p class="dg__empty text-pretty">{EMPTY[category]}</p>}
+
     {
-      /* A category with nothing in it still has to be a real page, because the
-         landing page always links to all three. Saying so plainly beats a
-         heading with silence under it. */
-      entries.length === 0 && (
-        <p class="empty text-pretty">{EMPTY[category]}</p>
+      mode === 'wall' && items.length > 0 && (
+        <div class="dg__wall" data-masonry data-cols="3">
+          {items.map((item, i) => (
+            <div
+              class="dg__cell"
+              data-mas-item
+              data-ar={item.src.height / item.src.width}
+            >
+              <button
+                type="button"
+                class="dg__shot"
+                data-shot
+                data-full={item.full.src}
+                data-alt={item.label}
+                data-caption={item.label}
+                aria-label={`Open full size: ${item.label}`}
+              >
+                <Picture
+                  src={item.src}
+                  alt={item.label}
+                  formats={['avif', 'webp']}
+                  fallbackFormat="jpg"
+                  widths={[320, 500, 760, 1100]}
+                  sizes="(min-width: 1100px) 30vw, (min-width: 700px) 45vw, 92vw"
+                  loading={i < 3 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  class="dg__img"
+                />
+              </button>
+            </div>
+          ))}
+        </div>
       )
     }
-  </Section>
 
+    {
+      mode === 'cards' && items.length > 0 && (
+        <ul class="dg__cards">
+          {items.map((item, i) => (
+            <li>
+              <button
+                type="button"
+                class="card"
+                data-shot
+                data-full={item.full.src}
+                data-alt={item.label}
+                data-caption={item.label}
+                aria-label={`Open full size: ${item.label}`}
+              >
+                <span class="card__media">
+                  <Picture
+                    src={item.src}
+                    alt={item.label}
+                    formats={['avif', 'webp']}
+                    fallbackFormat="jpg"
+                    widths={[400, 700, 1000]}
+                    sizes="(min-width: 1100px) 24vw, (min-width: 700px) 45vw, 92vw"
+                    loading={i < 4 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    class="card__img"
+                  />
+                </span>
+                <span class="card__name">{item.label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+
+  <Masonry />
+  <Lightbox />
   <ContactFooter />
 </Base>
 
 <style>
-  .empty {
+  .dg {
+    --dg-gap: clamp(0.35rem, 0.8vw, 0.7rem);
+
+    background-color: var(--color-corner);
+    padding: var(--spacing-gutter);
+    padding-block-end: var(--spacing-room);
+  }
+
+  .dg__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem 1.5rem;
+    margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
+  }
+
+  .dg__head a {
+    color: var(--color-bone);
+    text-decoration: none;
+    transition:
+      background-color 180ms var(--ease-settle),
+      color 180ms var(--ease-settle);
+  }
+
+  .dg__head a:hover {
+    background-color: var(--color-flare);
+    color: var(--color-bone);
+  }
+
+  .dg__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    color: var(--color-flare);
+    margin: 0;
+    margin-inline-end: auto;
+  }
+
+  .dg__count {
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  .dg__intro {
+    max-width: 52ch;
+    margin: 0 0 clamp(2rem, 6vh, 3.5rem);
+    font-size: var(--text-step-1);
+    opacity: 0.8;
+  }
+
+  .dg__empty {
     max-width: 48ch;
     margin: 0;
     font-size: var(--text-step-1);
     opacity: 0.6;
+  }
+
+  /* -- Wall: paid social ------------------------------------------------- */
+
+  .dg__wall {
+    --mas-gap: var(--dg-gap);
+  }
+
+  .dg__shot {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+    line-height: 0;
+  }
+
+  .dg__img {
+    width: 100%;
+    height: auto;
+    transition: opacity 240ms var(--ease-settle);
+  }
+
+  .dg__shot:hover .dg__img,
+  .dg__shot:focus-visible .dg__img {
+    opacity: 0.78;
+  }
+
+  /* -- Cards: email ------------------------------------------------------ */
+
+  .dg__cards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(0.9rem, 2vw, 1.6rem);
+  }
+
+  .card {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: left;
+    cursor: zoom-in;
+  }
+
+  .card__media {
+    display: block;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    /* Generous radius, per the reference. Squares this size read as hard
+       tiles without it. */
+    border-radius: clamp(0.75rem, 1.6vw, 1.15rem);
+    background-color: var(--color-corner-lift);
+    border: 1px solid color-mix(in srgb, var(--color-bone) 12%, transparent);
+    transition:
+      border-color 220ms var(--ease-settle),
+      transform 320ms var(--ease-settle);
+  }
+
+  /* An email is four to five times taller than it is wide. Centred, a square
+     crop lands on a random band of body copy; anchored top it lands on the
+     masthead, which is the part that identifies the campaign. */
+  .card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  .card:hover .card__media,
+  .card:focus-visible .card__media {
+    border-color: var(--color-flare);
+    transform: translateY(-2px);
+  }
+
+  .card__name {
+    display: block;
+    margin-top: 0.7rem;
+    font-family: var(--font-display);
+    font-size: var(--text-step-0);
+    line-height: 1.15;
+    text-transform: uppercase;
+    letter-spacing: -0.005em;
+    transition: color 200ms var(--ease-settle);
+  }
+
+  .card:hover .card__name {
+    color: var(--color-flare);
+  }
+
+  @media (max-width: 1100px) {
+    .dg__cards {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 760px) {
+    .dg__cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 </style>

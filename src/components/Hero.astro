@@ -141,27 +141,33 @@ const DISCIPLINES = [
      Every value is in em so the whole chip scales with the fit solver. Using px
      for the padding or the border would make the buttons drift out of
      proportion at each viewport as the font-size is solved. */
+  /* Filled red at rest, deep green on hover. The fill is the affordance now,
+     so the border only exists to keep the chip's edge crisp against the
+     background and matches whichever fill is showing. */
   .hero__word {
-    color: inherit;
+    color: var(--color-bone);
     text-decoration: none;
     padding: 0.24em 0.4em 0.3em;
+    background-color: var(--color-flare);
     /* Floored at 1px. Purely em-based, the border solves to 0.5px on a phone
        where the fitted font-size is small, and a half-pixel hairline is the
        same as no affordance at all. The em value still governs at large
        sizes. */
-    border: max(1px, 0.045em) solid
-      color-mix(in srgb, var(--color-bone) 38%, transparent);
+    border: max(1px, 0.045em) solid var(--color-flare);
     border-radius: 0.32em;
+    /* Long enough to read as a wash between two saturated colours rather than
+       a swap. Red to green is a big hue move, so a short transition reads as
+       a flicker. */
     transition:
-      background-color 220ms var(--ease-settle),
-      border-color 220ms var(--ease-settle),
-      color 220ms var(--ease-settle);
+      background-color 320ms var(--ease-settle),
+      border-color 320ms var(--ease-settle),
+      color 320ms var(--ease-settle);
   }
 
   .hero__word:hover,
   .hero__word:focus-visible {
-    background-color: var(--color-flare);
-    border-color: var(--color-flare);
+    background-color: var(--color-moss);
+    border-color: var(--color-moss);
     color: var(--color-bone);
   }
 

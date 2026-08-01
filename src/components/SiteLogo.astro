@@ -1,0 +1,56 @@
+---
+/**
+ * The mark that sits at the top of every page except home.
+ *
+ * Home is the exception on purpose: it opens on the full-size lockup, and a
+ * second CSJACKO above it would be the same word twice on one screen.
+ *
+ * Rendered as type rather than an image. The site has no logo file, only a
+ * placeholder favicon, and the mark IS the wordmark set in the display face.
+ * Setting it as text keeps it identical to the hero lockup at every size,
+ * costs no request, and stays selectable and readable to a screen reader.
+ */
+---
+
+<div class="mark">
+  <a class="mark__link" href="/" aria-label="CSJACKO, back to home">
+    <span class="mark__word" aria-hidden="true">CSJACKO</span>
+  </a>
+</div>
+
+<style>
+  .mark {
+    display: flex;
+    justify-content: center;
+    /* Same top offset on every page, which is what makes it read as fixed
+       furniture rather than part of each page's own header. */
+    padding-block: clamp(1rem, 2.5vh, 1.75rem) 0;
+    padding-inline: var(--spacing-gutter);
+  }
+
+  .mark__link {
+    display: inline-block;
+    text-decoration: none;
+    line-height: 1;
+    /* Widens the tap target past the glyphs without moving them. */
+    padding: 0.35rem 0.6rem;
+  }
+
+  .mark__word {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 3.2vw, 2rem);
+    line-height: 0.9;
+    letter-spacing: 0.01em;
+    color: var(--color-flare);
+    transition:
+      opacity 200ms var(--ease-settle),
+      transform 200ms var(--ease-settle);
+  }
+
+  .mark__link:hover .mark__word,
+  .mark__link:focus-visible .mark__word {
+    opacity: 0.78;
+    transform: translateY(-1px);
+  }
+</style>

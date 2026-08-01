@@ -238,6 +238,14 @@ const strategy = defineCollection({
                 title: z.string(),
                 date: z.string().optional(),
                 note: z.string().optional(),
+
+                /* The two lines that make an email card worth reading rather
+                   than just a name and a date. Optional because the plans were
+                   written before the cards existed: a card renders correctly
+                   without them and gains them the moment they are filled in,
+                   rather than every entry needing a rewrite first. */
+                subject: z.string().optional(),
+                preview: z.string().optional(),
               }),
             )
             .default([]),

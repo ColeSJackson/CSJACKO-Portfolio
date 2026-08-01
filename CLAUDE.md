@@ -33,6 +33,41 @@ This uploads the current working tree straight to Vercel and aliases it to
 trigger a deployment — it will not, and outdated commits already exist on
 `origin/main` that do not match local.
 
+## Invariants
+
+These are rules the site has regressed on before. Change them deliberately or
+not at all.
+
+### Film grain applies to background surfaces only
+
+Grain belongs to page and section grounds. It must never render over an `img`,
+a `video`, or any element wrapping one. Grain on a photograph does not read as
+film, it reads as a low-quality JPEG.
+
+This is enforced structurally, not by exception. `--grain` in `global.css` is a
+noise tile whose alpha carries the effect (white specks on transparency), and it
+is applied as a `background-image` on surfaces. An element's background always
+paints behind its content, so media inside a grained surface is clean by
+construction.
+
+Do **not** reintroduce the old arrangement: a fixed overlay with a high z-index
+and `mix-blend-mode: screen`, which media escaped only by being named in an
+allowlist and pushed above it. That list has to be extended by hand for every
+new component, and every component added after it was written silently got
+grain baked over its images. That is the bug, and it is why this is a
+background-image now.
+
+Adding a new full-width surface? Add its class to the grain selector list in
+`global.css`. Forgetting costs a little texture on one section, which is the
+right way round to fail.
+
+### The photo and design walls must not leave holes
+
+`Masonry.astro` assigns columns explicitly, shortest-column-first by aspect
+ratio. Neither CSS `columns` nor CSS Grid can pack these without gaps: both
+refuse to move an item backwards, so a tall frame strands the space it did not
+fit into. Do not "simplify" it back to `columns: 3`.
+
 ## Architecture
 
 Astro (static output), TypeScript, Tailwind 4 (via `@tailwindcss/vite`, tokens
