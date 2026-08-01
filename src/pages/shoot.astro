@@ -12,15 +12,12 @@
  *      portrait stays tall and a wide frame stays wide. The grid bends around
  *      the photographs rather than the photographs being cut to fit the grid.
  *
- *   2. Favourites lead, spread across every column. They render in their own
- *      CSS Grid (3 columns, row-flow) rather than the masonry below, because
- *      column-based masonry fills one column completely before starting the
- *      next: with the favourites first in source order that packed all of
- *      them into column one instead of spreading them. Grid fills row by
- *      row, so a 3-wide row means every third pick lands in the same column,
- *      which reads as spread rather than stacked.
+ *   2. Favourites lead. They render in their own list above the wall, never
+ *      mixed into it and never below it. Both blocks use the same multi-column
+ *      masonry and the same gap, so the page reads as one continuous body of
+ *      work with the picks simply arriving first.
  *
- *      Edit FAVOURITES to change the picks or their order.
+ *      Edit FAVOURITES to change the picks.
  */
 
 import { Picture, getImage } from 'astro:assets';
@@ -214,6 +211,16 @@ const rest = paired.slice(FAVOURITES.length);
 
 <style>
   .ph {
+    /* One gap value for both blocks, so the favourites and the wall below them
+       stay on the same rhythm and read as one body of work. Tightened from
+       clamp(0.4rem, 1.2vw, 0.9rem): at 1440px that solved to 14.4px, which set
+       the frames apart rather than letting them run together. */
+    --ph-gap: clamp(0.3rem, 0.7vw, 0.62rem);
+
+    /* The only deliberate pause on the page: enough to mark where the picks end
+       without reading as the page having stopped. Was 48px at 1440px. */
+    --ph-block-gap: clamp(0.9rem, 1.6vw, 1.4rem);
+
     background-color: var(--color-corner);
     padding: var(--spacing-gutter);
     padding-block-end: var(--spacing-room);
@@ -255,23 +262,28 @@ const rest = paired.slice(FAVOURITES.length);
     margin: 0;
   }
 
-  /* Favourites: a real 3-column grid, row-flow, so picks land one-per-column
-     in reading order (1st in col 1, 2nd in col 2, 3rd in col 3, 4th back in
-     col 1, and so on) rather than stacking down column one the way the
-     masonry below would.
+  /* Favourites used to be a row-flow CSS Grid, to spread the picks one per
+     column instead of stacking them down column one. It did spread them, but
+     grid rows are as tall as their tallest cell, so every short frame sat in a
+     pocket of dead space: measured at 1440px, gaps inside this block ran to
+     347px against the 14px the block actually declared, 1918px of emptiness
+     across 16 images. That is what made the page read as separated blocks.
 
-     align-items: start is what keeps this from becoming the row grid the
-     masonry comment below warns against: a shorter neighbour in the same row
-     just leaves gap beneath it instead of being stretched or cropped to match
-     the row's tallest cell. */
+     Multi-column fixes it at the root. Each column is packed independently, so
+     a frame's neighbours never dictate its spacing and the only vertical gap is
+     the one set here. Column-major reading order is the trade, and it costs
+     nothing: these 16 are a set, not a sequence.
+
+     The stacking that made grid necessary in the first place is not a risk
+     here. That happened when the favourites were the first 16 of one 85-image
+     list, tall enough for column one to swallow them all. With their own
+     container, 16 items balance across the three columns. */
   .ph__top {
     list-style: none;
-    margin: 0 0 clamp(1.5rem, 4vw, 3rem);
+    margin: 0 0 var(--ph-block-gap);
     padding: 0;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: start;
-    gap: clamp(0.4rem, 1.2vw, 0.9rem);
+    columns: 3;
+    column-gap: var(--ph-gap);
   }
 
   /* Column masonry rather than a row grid, because columns let every frame keep
@@ -282,12 +294,13 @@ const rest = paired.slice(FAVOURITES.length);
     margin: 0;
     padding: 0;
     columns: 3;
-    column-gap: clamp(0.4rem, 1.2vw, 0.9rem);
+    column-gap: var(--ph-gap);
   }
 
+  .ph__top-cell,
   .ph__cell {
     break-inside: avoid;
-    margin-bottom: clamp(0.4rem, 1.2vw, 0.9rem);
+    margin-bottom: var(--ph-gap);
   }
 
   /* Landscape frames break the column rhythm on purpose. In a wall of mostly
@@ -321,20 +334,14 @@ const rest = paired.slice(FAVOURITES.length);
   }
 
   @media (max-width: 1100px) {
-    .ph__top {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
+    .ph__top,
     .ph__grid {
       columns: 2;
     }
   }
 
   @media (max-width: 620px) {
-    .ph__top {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
+    .ph__top,
     .ph__grid {
       columns: 1;
     }

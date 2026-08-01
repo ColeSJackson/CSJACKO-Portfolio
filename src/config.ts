@@ -21,7 +21,8 @@ export const SITE = {
       this path. */
   cv: '/cv.pdf',
 
-  location: 'Hook, Hampshire. Commutable to London, happy to work remote.',
+  location:
+    'Farnborough, Hampshire. Commutable to London, happy to work remote.',
 
   lookingFor: 'A full-time content, social or brand role on a marketing team.',
 } as const;

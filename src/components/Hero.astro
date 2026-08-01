@@ -13,6 +13,11 @@
  * menu. They share one line rather than getting one each because filling the
  * measure with a single word needs roughly 350px type, and four stacked lines
  * of that do not fit a viewport.
+ *
+ * The homepage carries no top bar at all: no wordmark, no utility nav. The
+ * page opens straight on the logo, and the discipline row below it is the
+ * only navigation. Inner pages keep their own header, because none of them
+ * have these in-page buttons to navigate by.
  */
 
 const DISCIPLINES = [
@@ -24,18 +29,6 @@ const DISCIPLINES = [
 ---
 
 <section class="hero">
-  <nav class="hero__nav" aria-label="Secondary">
-    <span class="label">Cole SJ</span>
-    <ul>
-      <li><a href="/shoot">Shoot</a></li>
-      <li><a href="/edit">Edit</a></li>
-      <li><a href="/design">Design</a></li>
-      <li><a href="/strategy">Strategy</a></li>
-      <li><a href="/about">About</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
-  </nav>
-
   <div class="hero__stack" data-fit-group>
     <h1 class="lockup bloom warp hero__mark" data-fit style="--i:0">
       CSJACKO
@@ -89,43 +82,6 @@ const DISCIPLINES = [
      having stopped rather than as breathing room. */
   .hero__stack {
     margin-top: auto;
-  }
-
-  /* Nav is part of the hero and scrolls away with it. The site has no
-     persistent top bar: the four discipline words are the real navigation. */
-  .hero__nav {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1rem 2rem;
-  }
-
-  .hero__nav ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.25rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .hero__nav a {
-    font-family: var(--font-utility);
-    font-size: var(--text-step--2);
-    letter-spacing: 0.04em;
-    color: var(--color-bone);
-    text-decoration: none;
-    padding-bottom: 0.2em;
-    border-bottom: 1px solid transparent;
-    transition:
-      color 200ms var(--ease-settle),
-      border-color 200ms var(--ease-settle);
-  }
-
-  .hero__nav a:hover {
-    color: var(--color-flare);
-    border-bottom-color: var(--color-flare);
   }
 
   .hero__stack {
