@@ -20,6 +20,10 @@
  * have these in-page buttons to navigate by.
  */
 
+import { Picture } from 'astro:assets';
+import colePortrait from '../assets/home/cole-portrait.jpg';
+import ChalkAnnotation from './ChalkAnnotation.astro';
+
 const DISCIPLINES = [
   { word: 'SHOOT', href: '/shoot', label: 'Photography' },
   { word: 'EDIT', href: '/edit', label: 'Video and reels' },
@@ -40,6 +44,16 @@ const DISCIPLINES = [
     </h1>
 
     <nav class="hero__disciplines" aria-label="Work by discipline">
+      {/* Anchored to the discipline row, not the viewport, so it stays on the
+          Shoot button at every width. */}
+      <ChalkAnnotation
+        target="Shoot button"
+        text="My best photos everrr"
+        curve={34}
+        side="left"
+        class="hero__chalk"
+      />
+
       <p class="lockup hero__row" data-fit style="--i:1">
         {
           DISCIPLINES.map((d) => (
@@ -72,11 +86,18 @@ const DISCIPLINES = [
         <p class="bio__sign">- Cole SJ</p>
       </div>
 
-      {/* Holds the portrait's space so the card has its final proportions
-          before the photograph exists. Drop the image in and replace this
-          block; nothing else needs to move. */}
-      <div class="bio__portrait" aria-hidden="true">
-        <span class="bio__slot label">Photo of Cole</span>
+      <div class="bio__portrait">
+        <Picture
+          src={colePortrait}
+          alt="Cole shooting on a Sony body, with a collage of him holding a film camera and pulling a face to camera."
+          formats={['avif', 'webp']}
+          fallbackFormat="jpg"
+          widths={[400, 700, 1000, 1400]}
+          sizes="(min-width: 900px) 34vw, 92vw"
+          loading="eager"
+          decoding="async"
+          class="bio__img"
+        />
       </div>
     </div>
 
@@ -144,6 +165,17 @@ const DISCIPLINES = [
 
   .hero__disciplines {
     margin-top: clamp(0.4rem, 1.2vh, 0.9rem);
+    /* The annotation positions against this, which is the box the buttons
+       live in, so it tracks them rather than the window. */
+    position: relative;
+  }
+
+  /* Sits above and left of the row, arrow curving down into the Shoot chip.
+     Percentages, so it follows the row as the fit solver resizes it. */
+  .hero__chalk {
+    left: -1%;
+    bottom: 100%;
+    margin-bottom: -0.4rem;
   }
 
   .hero__row {
@@ -248,21 +280,20 @@ const DISCIPLINES = [
     opacity: 0.7;
   }
 
-  /* 4:5 portrait, the same ratio the case study covers use. */
+  /* 4:5 portrait, the same ratio the case study covers use. The ratio is fixed
+     and the image covers it, so a re-crop later changes what you see inside the
+     frame without moving anything around it. */
   .bio__portrait {
     aspect-ratio: 4 / 5;
-    display: grid;
-    place-items: center;
     border-radius: clamp(0.75rem, 1.5vw, 1.1rem);
     background-color: var(--color-corner-lift);
-    border: 1px dashed color-mix(in srgb, var(--color-bone) 22%, transparent);
     overflow: hidden;
   }
 
-  .bio__slot {
-    opacity: 0.45;
-    text-align: center;
-    padding: 0.5rem;
+  .bio__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .hero__scroll {

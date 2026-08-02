@@ -84,6 +84,20 @@
   font-display: swap;
 }
 
+/* Chalk handwriting for the homepage annotations. Self-hosted rather than a
+   system cursive: the stack would fall through to whatever the OS calls
+   cursive, which on most machines is nothing, and the annotation would render
+   in the body face and stop reading as handwriting at all. Caveat, SIL Open
+   Font Licence, latin subset only. */
+@font-face {
+  font-family: 'Caveat';
+  src: url('/fonts/caveat-600-latin.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+2018-201A, U+2032, U+2044, U+2212;
+}
+
 @theme {
   /* -- Palette ------------------------------------------------------------
      Black ground, one hot red, one off-white. That is the whole system.

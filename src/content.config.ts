@@ -171,10 +171,21 @@ const work = defineCollection({
         .array(z.object({ label: z.string(), value: z.string() }))
         .default([]),
 
+      /* Where the work actually lives, when it is public. Rendered as a
+         credited link out, so a reader can go and see it running rather than
+         taking the case study's word for it. */
+      externalUrl: z.string().url().optional(),
+
+      /** Shown beside the external link. Says what was mine. */
+      credit: z.string().optional(),
+
       /* Karina structure: repeating statement + outcome + media blocks. */
       media: z
         .array(
           z.object({
+            /* Names the group, so one piece can separate Product from
+               Lifestyle rather than running both into one wall. */
+            label: z.string().optional(),
             statement: z.string(),
             outcome: z.string().optional(),
             assets: z.array(asset).default([]),

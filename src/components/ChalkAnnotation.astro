@@ -1,0 +1,198 @@
+---
+/**
+ * A hand-drawn chalk arrow with handwriting, pointing at something on the page.
+ *
+ * Positioned against its nearest positioned ancestor, not the viewport, so it
+ * tracks whatever it points at through every breakpoint. Put it inside the
+ * container that holds the target and give that container `position: relative`.
+ *
+ * It is decoration in the strict sense: `aria-hidden` and `pointer-events:
+ * none`, so it never enters the tab order, never gets read out, and cannot
+ * intercept a hover or a click on the thing it is pointing at. That last part
+ * matters here, because it overlaps the discipline buttons and those have a
+ * hover state that must keep working.
+ *
+ * The chalk texture is a real filter, not an image: turbulence driving a
+ * displacement map roughs the stroke edge, and a second wide, faint copy of the
+ * same path underneath reads as the dust a chalk line leaves behind. Round caps
+ * and joins because chalk has no sharp corners.
+ */
+
+interface Props {
+  /** For the comment in the markup. The component does not query the DOM. */
+  target?: string;
+  text: string;
+  /** How much the arrow bows. Positive bows one way, negative the other. */
+  curve?: number;
+  /** Which side of the target it sits on. Flips the whole thing horizontally. */
+  side?: 'left' | 'right';
+  /** Extra classes for placement against the parent. */
+  class?: string;
+}
+
+const {
+  target = '',
+  text,
+  curve = 40,
+  side = 'left',
+  class: className = '',
+} = Astro.props;
+
+/* One id per instance, so two annotations on a page cannot share a filter. */
+const uid = `chalk-${Math.random().toString(36).slice(2, 8)}`;
+
+/* The arrow, drawn in a 200x120 box. A quadratic curve whose control point is
+   pushed by `curve`, then two short strokes forming the head. Head is part of
+   the same path, so the whole thing draws as one line. */
+const d = `M 8 16 Q ${100 + curve} ${18 + curve} 176 96 M 176 96 L 150 88 M 176 96 L 166 70`;
+---
+
+<div
+  class:list={['chalk', `chalk--${side}`, className]}
+  aria-hidden="true"
+  data-chalk
+  data-target={target}
+>
+  <svg class="chalk__svg" viewBox="0 0 200 120" fill="none" focusable="false">
+    <defs>
+      <filter id={uid} x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.9"
+          numOctaves="3"
+          seed="5"
+          result="n"
+        />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="n"
+          scale="2.4"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+    </defs>
+
+    {/* The dust: same path, much wider and very faint, sitting under the line. */}
+    <path class="chalk__dust" d={d} filter={`url(#${uid})`} />
+    <path class="chalk__line" d={d} filter={`url(#${uid})`} />
+  </svg>
+
+  <span class="chalk__text">{text}</span>
+</div>
+
+<style>
+  .chalk {
+    position: absolute;
+    /* Never a click target, and never in the way of one. Without this the
+       arrow's own box would sit over the buttons and eat their hover. */
+    pointer-events: none;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    width: clamp(9rem, 15vw, 13rem);
+  }
+
+  .chalk--right {
+    /* Mirrors the arrow so it can approach from the other side. The text is
+       un-mirrored below, or it would read backwards. */
+    transform: scaleX(-1);
+  }
+
+  .chalk--right .chalk__text {
+    transform: scaleX(-1) rotate(-6deg);
+    align-self: flex-end;
+  }
+
+  .chalk__svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .chalk__line,
+  .chalk__dust {
+    fill: none;
+    stroke: #f2efe6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .chalk__line {
+    stroke-width: 3.2;
+    opacity: 0.85;
+  }
+
+  /* Wide and faint: this is what stops the stroke reading as a clean vector
+     line and starts it reading as something pressed onto a surface. */
+  .chalk__dust {
+    stroke-width: 7;
+    opacity: 0.14;
+  }
+
+  .chalk__text {
+    font-family: 'Caveat', sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.1rem, 2.2vw, 1.7rem);
+    line-height: 1.05;
+    color: #f2efe6;
+    opacity: 0.85;
+    transform: rotate(-6deg);
+    transform-origin: left center;
+    padding-inline-start: 0.4rem;
+  }
+
+  /* Draw-on. The dash pattern is set long enough to cover the whole path, then
+     the offset is animated to zero so the line appears to be drawn.
+
+     Delayed past the hero's own entrance: the lockup animates in over 800ms
+     with a 110ms stagger, so this starts after that has resolved rather than
+     competing with it. */
+  @media (prefers-reduced-motion: no-preference) {
+    .chalk__line,
+    .chalk__dust {
+      stroke-dasharray: 420;
+      stroke-dashoffset: 420;
+      animation: chalk-draw 900ms var(--ease-settle) 1150ms forwards;
+    }
+
+    .chalk__text {
+      opacity: 0;
+      animation: chalk-fade 500ms var(--ease-settle) 1900ms forwards;
+    }
+  }
+
+  @keyframes chalk-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes chalk-fade {
+    to {
+      opacity: 0.85;
+    }
+  }
+
+  /* Under reduced motion there is no draw-on at all: the annotation is simply
+     already there, which is the honest reading of that setting. */
+  @media (prefers-reduced-motion: reduce) {
+    .chalk__line,
+    .chalk__dust,
+    .chalk__text {
+      animation: none;
+    }
+  }
+
+  /* Below 768px there is no room beside the buttons: at that width the row
+     already fills the screen and an arrow alongside it would either overlap the
+     type or push off-canvas. Hidden rather than stacked, because stacked it
+     points at nothing. */
+  @media (max-width: 768px) {
+    .chalk {
+      display: none;
+    }
+  }
+</style>

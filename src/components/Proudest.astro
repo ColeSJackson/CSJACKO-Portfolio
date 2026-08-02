@@ -59,7 +59,7 @@ const isWithheld = (e: CollectionEntry<'work'>) =>
                 /
               </span>
               <span class="pw__year label">{d.year}</span>
-              {withheld && <span class="pw__flag label">Confidential</span>}
+              {withheld && <span class="pw__flag">CONFIDENTIAL</span>}
             </div>
 
             <h3 class="pw__title">{d.title}</h3>
@@ -71,6 +71,36 @@ const isWithheld = (e: CollectionEntry<'work'>) =>
             </p>
 
             {!withheld && <p class="pw__outcome text-pretty">{d.outcome}</p>}
+
+            {d.externalUrl && (
+              <p class="pw__credit">
+                <a
+                  class="pw__link"
+                  href={d.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {d.credit ?? d.externalUrl}
+                  <svg
+                    class="pw__arrow"
+                    viewBox="0 0 12 12"
+                    width="11"
+                    height="11"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M3 9L9 3M9 3H4.5M9 3v4.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  <span class="sr-only">(opens in a new tab)</span>
+                </a>
+              </p>
+            )}
 
             {d.publicResults && d.stats.length > 0 && (
               <dl class="pw__stats">
@@ -155,14 +185,50 @@ const isWithheld = (e: CollectionEntry<'work'>) =>
   }
 
   /* Reads as a stamp rather than another metadata field, because it is the one
-     thing on the row that changes what you can expect to see. */
+     thing on the row that changes what you can expect to see.
+
+     text-transform is uppercase, not capitalize: the word is already caps in
+     the markup, and this guarantees no inherited rule can downcase it. */
   .pw__flag {
     margin-inline-start: 0.35rem;
-    padding: 0.2em 0.55em;
+    padding: 0.2em 0.6em;
+    font-family: var(--font-utility);
+    font-size: var(--text-step--2);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    line-height: 1.2;
     border: 1px solid var(--color-flare);
     border-radius: 0.25rem;
     color: var(--color-flare);
     opacity: 1;
+  }
+
+  .pw__credit {
+    margin: 1.1rem 0 0;
+  }
+
+  .pw__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 52ch;
+    font-size: var(--text-step-0);
+    line-height: 1.45;
+    color: var(--color-flare);
+    text-decoration: none;
+    border-block-end: 1px solid
+      color-mix(in srgb, var(--color-flare) 45%, transparent);
+    padding-block-end: 0.15rem;
+    transition: border-color 200ms var(--ease-settle);
+  }
+
+  .pw__link:hover,
+  .pw__link:focus-visible {
+    border-block-end-color: var(--color-flare);
+  }
+
+  .pw__arrow {
+    flex: none;
   }
 
   .pw__title {
