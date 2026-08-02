@@ -197,10 +197,13 @@
      and alpha is taken from luminance, so the dark majority of the tile
      becomes fully transparent and only the highlights survive. Composited over
      the surface colour that reads identically to the old screen blend, with no
-     blend mode and no stacking context. The luminance coefficients are scaled
-     to about a fifth to carry the opacity the overlay used to apply. */
+     blend mode and no stacking context. The luminance coefficients carry the opacity the
+     old overlay applied. They were doubled when the per-section grain was
+     removed: sections used to stack their own tile on top of the field's, so
+     the texture you saw was two layers, and one layer at the old value read
+     as almost smooth. */
   :root {
-    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' exponent='2.8'/%3E%3CfeFuncG type='gamma' exponent='2.8'/%3E%3CfeFuncB type='gamma' exponent='2.8'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.18 0.18 0.18 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' exponent='2.8'/%3E%3CfeFuncG type='gamma' exponent='2.8'/%3E%3CfeFuncB type='gamma' exponent='2.8'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.34 0.34 0.34 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   /* Every opaque surface on the site carries the texture. These are page and
@@ -209,20 +212,11 @@
      Adding a surface and forgetting it here costs a little texture on one
      section. That is the right way round: the old arrangement failed by
      painting grain over photographs, which is the failure that matters. */
-  body,
-  .room-dark,
+  /* Only the rooms that deliberately change colour still paint a ground, and
+     they carry their own grain because they cover the field. Everything else
+     is transparent and inherits the one continuous surface underneath. */
   .room-read,
-  .ph, /* shoot wall */
-  .sc, /* Section: shared section template */
-  .st, /* StrategyList */
-  .dz, /* design landing */
-  .dg, /* design category pages */
-  .sz, /* strategy landing */
-  .bp, /* strategy brand pages */
-  .rw, /* edit reel wall */
-  .ar, /* Archive */
-  .cs, /* work case study */
-  .contact {
+  .cs {
     background-image: var(--grain);
   }
 
@@ -253,7 +247,29 @@
     z-index: -1;
     overflow: hidden;
     pointer-events: none;
-    background-color: var(--color-ink);
+    /* Deliberately NOT a colour. The ground comes from body, which is set per
+       page by the layout's `ground` prop, so the field tints nothing and a
+       corner page stays corner all the way down. Painting ink here is what
+       made transparent sections disagree with grounded ones. */
+    background-color: transparent;
+  }
+
+  /* The field is an opaque fill, so it hides the grain on body's background
+     entirely. Any section without a ground of its own therefore came out
+     smooth, while the next section down carried its own grain, and the join
+     between them was a hard horizontal edge.
+
+     This puts the tile back on top of the blooms. It sits inside .field, above
+     the blobs but still inside the layer that renders behind all content, so
+     the texture is continuous from the top of the page to the bottom whether a
+     section paints a ground or not. */
+  .field::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: var(--grain);
   }
 
   .field__blob {

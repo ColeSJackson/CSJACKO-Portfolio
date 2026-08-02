@@ -1,0 +1,213 @@
+---
+/**
+ * Proudest work.
+ *
+ * Replaces the scorecard, which laid this out as rounds on a judge's card:
+ * numbered rows, a "3 rounds" count, and every piece of substance collapsed
+ * behind a toggle. That shape earns its keep on a dense index where the job is
+ * to compare twelve things quickly. It works against three pieces someone is
+ * proud of, because the part worth reading is the part it hides.
+ *
+ * So nothing is hidden. Each piece gets a block with its statement at reading
+ * size, and the metadata drops to the quiet role metadata should have. Three
+ * items do not need a table, they need three statements that land.
+ *
+ * Entries still carry `round`, which fixes their order. It is no longer shown:
+ * ranking your own work first, second and third invites a question nobody
+ * needed to ask.
+ */
+
+import type { CollectionEntry } from 'astro:content';
+import { CONTEXT_LABEL } from '../content.config';
+
+interface Props {
+  entries: CollectionEntry<'work'>[];
+}
+
+const { entries } = Astro.props;
+
+/* A withheld piece is still worth listing: that it exists and cannot be shown
+   yet is itself information. It just needs saying plainly rather than leaving
+   a reader wondering why the block is thin. */
+const isWithheld = (e: CollectionEntry<'work'>) =>
+  /^CONFIDENTIAL/i.test(e.data.statement);
+---
+
+<section class="proud room" id="featured" aria-labelledby="proud-heading">
+  <header class="proud__head">
+    <h2 id="proud-heading" class="proud__heading">Proudest work</h2>
+    <p class="proud__note label">
+      The three I would show first
+    </p>
+  </header>
+
+  <ul class="proud__list">
+    {
+      entries.map((entry) => {
+        const d = entry.data;
+        const withheld = isWithheld(entry);
+
+        return (
+          <li class="pw" data-reveal>
+            <div class="pw__meta">
+              <span class="pw__client label">{d.client}</span>
+              <span class="pw__dot label" aria-hidden="true">
+                /
+              </span>
+              <span class="pw__context label">{CONTEXT_LABEL[d.context]}</span>
+              <span class="pw__dot label" aria-hidden="true">
+                /
+              </span>
+              <span class="pw__year label">{d.year}</span>
+              {withheld && <span class="pw__flag label">Confidential</span>}
+            </div>
+
+            <h3 class="pw__title">{d.title}</h3>
+
+            <p class="pw__statement text-pretty">
+              {withheld
+                ? 'Held back until the campaign runs. The write-up and the imagery go live when it does.'
+                : d.statement}
+            </p>
+
+            {!withheld && <p class="pw__outcome text-pretty">{d.outcome}</p>}
+
+            {d.publicResults && d.stats.length > 0 && (
+              <dl class="pw__stats">
+                {d.stats.map((s) => (
+                  <div class="pw__stat">
+                    <dt class="label">{s.label}</dt>
+                    <dd>{s.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</section>
+
+<style>
+  .proud {
+    /* Sits over the drifting field rather than painting its own ground, so the
+       homepage stays one continuous surface from the lockup down. */
+    padding-block: var(--spacing-room);
+  }
+
+  .proud__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    padding-bottom: 1.25rem;
+    border-block-end: 1px solid
+      color-mix(in srgb, var(--color-bone) 20%, transparent);
+  }
+
+  /* The section heading is a real heading now, not a utility label. It is
+     introducing the strongest three things on the site. */
+  .proud__heading {
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    color: var(--color-flare);
+    margin: 0;
+  }
+
+  .proud__note {
+    margin: 0;
+    opacity: 0.55;
+  }
+
+  .proud__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pw {
+    padding-block: clamp(2rem, 5vh, 3.25rem);
+    border-block-end: 1px solid
+      color-mix(in srgb, var(--color-bone) 12%, transparent);
+  }
+
+  .pw:last-child {
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+
+  .pw__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.55;
+    margin-bottom: 0.85rem;
+  }
+
+  .pw__dot {
+    opacity: 0.5;
+  }
+
+  /* Reads as a stamp rather than another metadata field, because it is the one
+     thing on the row that changes what you can expect to see. */
+  .pw__flag {
+    margin-inline-start: 0.35rem;
+    padding: 0.2em 0.55em;
+    border: 1px solid var(--color-flare);
+    border-radius: 0.25rem;
+    color: var(--color-flare);
+    opacity: 1;
+  }
+
+  .pw__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.015em;
+    margin: 0 0 0.9rem;
+  }
+
+  /* The line that was hidden behind the toggle. It is the reason the piece is
+     here, so it gets the largest body size on the page. */
+  .pw__statement {
+    max-width: 46ch;
+    margin: 0;
+    font-size: var(--text-step-1);
+    line-height: 1.45;
+  }
+
+  .pw__outcome {
+    max-width: 62ch;
+    margin: 0.85rem 0 0;
+    font-size: var(--text-step-0);
+    line-height: 1.55;
+    opacity: 0.7;
+  }
+
+  .pw__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    margin: 1.5rem 0 0;
+  }
+
+  .pw__stat dt {
+    opacity: 0.55;
+    margin-bottom: 0.3rem;
+  }
+
+  .pw__stat dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1;
+    color: var(--color-flare);
+  }
+</style>

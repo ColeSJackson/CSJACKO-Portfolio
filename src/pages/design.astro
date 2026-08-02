@@ -12,8 +12,8 @@
  * SUBSECTIONS and picking a thumbnail below; the route generates itself.
  */
 
-import { getCollection } from 'astro:content';
 import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import Base from '../layouts/Base.astro';
 import ContactFooter from '../components/ContactFooter.astro';
 import { SUBSECTION_ORDER, SUBSECTION_TITLE } from '../content.config';
@@ -40,18 +40,21 @@ const THUMBS = {
   },
 } as const;
 
-const entries = await getCollection(
-  'work',
-  ({ data }) => !data.draft && data.section === 'design',
-);
+/* Counted from the asset folders, which is what the category pages actually
+   render. This used to count the `work` collection instead, and once that was
+   emptied of placeholders every category advertised "0 pieces" while its own
+   page showed dozens. Same source, same number, always. */
+const COUNTS = {
+  'paid-social': import.meta.glob('../assets/design/paid-social/*.{jpg,jpeg,png}'),
+  email: import.meta.glob('../assets/design/email/*.{jpg,jpeg,png}'),
+  print: import.meta.glob('../assets/design/print/*.{jpg,jpeg,png}'),
+} satisfies Record<string, Record<string, unknown>>;
 
-/* Counts come from the same collection the category pages read, so a category
-   can never advertise a number its own page does not show. */
 const categories = SUBSECTION_ORDER.map((key) => ({
   key,
   title: SUBSECTION_TITLE[key],
   ...THUMBS[key],
-  count: entries.filter((e) => e.data.subsection === key).length,
+  count: Object.keys(COUNTS[key]).length,
 }));
 ---
 
@@ -70,7 +73,7 @@ const categories = SUBSECTION_ORDER.map((key) => ({
     <ul class="dz__grid">
       {
         categories.map((c, i) => (
-          <li class="dz__cell">
+          <li class="dz__cell" data-reveal style={`--i:${i}`}>
             <a class="dz__card" href={`/design/${c.key}`}>
               <div class="dz__media">
                 <Picture
@@ -101,7 +104,6 @@ const categories = SUBSECTION_ORDER.map((key) => ({
 
 <style>
   .dz {
-    background-color: var(--color-corner);
     padding: var(--spacing-gutter);
     padding-block-end: var(--spacing-room);
   }

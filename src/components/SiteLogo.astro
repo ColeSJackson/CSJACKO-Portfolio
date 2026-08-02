@@ -5,6 +5,9 @@
  * Home is the exception on purpose: it opens on the full-size lockup, and a
  * second CSJACKO above it would be the same word twice on one screen.
  *
+ * Shares `transition:name="site-mark"` with the homepage lockup, so navigating
+ * off home tweens the big mark down into this one rather than cutting.
+ *
  * Rendered as type rather than an image. The site has no logo file, only a
  * placeholder favicon, and the mark IS the wordmark set in the display face.
  * Setting it as text keeps it identical to the hero lockup at every size,
@@ -14,7 +17,7 @@
 
 <div class="mark">
   <a class="mark__link" href="/" aria-label="CSJACKO, back to home">
-    <span class="mark__word" aria-hidden="true">CSJACKO</span>
+    <span class="mark__word" transition:name="site-mark" aria-hidden="true">CSJACKO</span>
   </a>
 </div>
 

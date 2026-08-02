@@ -67,8 +67,8 @@ const brands = BRANDS.map((key) => {
 
     <ul class="sz__grid">
       {
-        brands.map((b) => (
-          <li>
+        brands.map((b, i) => (
+          <li data-reveal style={`--i:${i}`}>
             <a class="sz__card" href={`/strategy/${b.key}`}>
               <span class="sz__brand">{b.label}</span>
               <span class="sz__period label">{b.period}</span>
@@ -88,7 +88,6 @@ const brands = BRANDS.map((key) => {
 
 <style>
   .sz {
-    background-color: var(--color-corner);
     padding: var(--spacing-gutter);
     padding-block-end: var(--spacing-room);
   }

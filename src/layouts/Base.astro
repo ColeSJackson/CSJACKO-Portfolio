@@ -7,6 +7,8 @@ import '../styles/global.css';
 import groovyFont from '../assets/fonts/groovy-madness.woff2?url';
 import textFont from '../assets/fonts/alte-haas-bold.woff2?url';
 import SiteLogo from '../components/SiteLogo.astro';
+import { ClientRouter } from 'astro:transitions';
+import Reveal from '../components/Reveal.astro';
 
 interface Props {
   title: string;
@@ -68,6 +70,12 @@ const GROUND_CLASS = {
     <meta property="og:type" content="website" />
     <meta name="theme-color" content="#0b0b0c" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+
+    {/* Turns navigation into a DOM swap, which is what lets the CSJACKO mark
+        morph between its two placements instead of the page reloading and the
+        mark simply appearing somewhere else. Anything relying on inline script
+        must re-init on astro:page-load; Masonry does. */}
+    <ClientRouter />
   </head>
 
   <body class={GROUND_CLASS[ground]}>
@@ -143,6 +151,8 @@ const GROUND_CLASS = {
     >
       Skip to content
     </a>
+
+    <Reveal />
 
     {logo && <SiteLogo />}
 

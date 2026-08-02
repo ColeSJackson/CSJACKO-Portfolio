@@ -62,7 +62,7 @@ const dated = plans.reduce(
       plans.map((plan) => {
         const d = plan.data;
         return (
-          <article class="plan">
+          <article class="plan" data-reveal>
             <header class="plan__head">
               <p class="plan__strand label">{STRAND_LABEL[d.strand]}</p>
               <h2 class="plan__title">{d.title}</h2>
@@ -156,7 +156,6 @@ const dated = plans.reduce(
 
 <style>
   .bp {
-    background-color: var(--color-corner);
     padding: var(--spacing-gutter);
     padding-block-end: var(--spacing-room);
   }

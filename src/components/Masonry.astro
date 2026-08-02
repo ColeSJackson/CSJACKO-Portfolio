@@ -46,6 +46,12 @@
   (() => {
     const grids = [];
 
+    /* Re-entrant on purpose. The inline body runs once, pre-paint, on a full
+       page load. Client-side navigation swaps the DOM without re-executing
+       inline scripts, so this same closure is re-run from astro:page-load
+       instead: the listener registered on first load survives every later
+       navigation. */
+
     /* data-cols is the desktop count; data-cols-min is the phone count, which
        defaults to 1 but is 2 wherever two frames still read at that width. */
     function columnsFor(root) {
@@ -89,7 +95,9 @@
       grid.root.replaceChildren(...columns);
     }
 
-    document.querySelectorAll('[data-masonry]').forEach((root) => {
+    function collect() {
+      grids.length = 0;
+      document.querySelectorAll('[data-masonry]').forEach((root) => {
       const items = Array.from(root.querySelectorAll('[data-mas-item]'));
       if (!items.length) return;
 
@@ -112,7 +120,14 @@
       const grid = { root, items, cols: 0 };
       grids.push(grid);
       build(grid);
-    });
+      });
+    }
+
+    collect();
+
+    /* Fires after every client-side navigation, and once on first load. The
+       repeat on first load is harmless: collect() rebuilds from scratch. */
+    document.addEventListener('astro:page-load', collect);
 
     function repackAll() {
       for (const grid of grids) build(grid);

@@ -1,0 +1,138 @@
+---
+/**
+ * Scroll reveals.
+ *
+ * Mark anything with `data-reveal` and it rises and fades as it enters view.
+ * Drop this component once per page.
+ *
+ * Two things this deliberately does not do.
+ *
+ * It does not hide content by default. The resting styles only apply once the
+ * script has set `data-reveal-ready` on <html>, which happens inline and
+ * pre-paint. With JS off, or if this script throws, every element stays
+ * visible: a reveal is decoration, and decoration must never be the thing
+ * standing between a reader and the page. For the same reason there is a hard
+ * timeout that shows everything after 2.5s no matter what.
+ *
+ * It is not applied to the photo or reel walls. Those are packed by Masonry,
+ * which moves items between columns and reads their heights; animating a
+ * transform on each frame would fight it and add work per image. Reveals go on
+ * blocks, not on media.
+ *
+ * Under prefers-reduced-motion the movement is dropped entirely and elements
+ * simply appear, which is the honest reading of that setting.
+ */
+---
+
+<script is:inline>
+  (() => {
+    const root = document.documentElement;
+
+    /* Set before first paint so the resting state applies to the first screen
+       too, rather than everything flashing in at once. */
+    root.setAttribute('data-reveal-ready', '');
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const show = (el) => el.classList.add('is-in');
+    const pending = () => document.querySelectorAll('[data-reveal]:not(.is-in)');
+    const showAll = () => pending().forEach(show);
+
+    /* Geometry, not IntersectionObserver.
+       IO is the usual tool here and it is what this used first, but it makes
+       an element's VISIBILITY depend on a callback firing. When that callback
+       does not run the content is not merely un-animated, it is invisible, and
+       that is the one failure this must not have. A bounding-box check against
+       the viewport is a couple of reads per element on scroll, there are only
+       ever a handful of them on a page, and it cannot silently not happen. */
+    function sweep() {
+      if (reduced.matches) return showAll();
+      const h = window.innerHeight;
+      for (const el of pending()) {
+        const r = el.getBoundingClientRect();
+        /* Slightly inside the fold, so it has finished arriving by the time it
+           is properly on screen. */
+        if (r.top < h * 0.92 && r.bottom > 0) show(el);
+      }
+    }
+
+    let ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      setTimeout(() => {
+        ticking = false;
+        sweep();
+      }, 80);
+    }
+
+    /* The real failsafe.
+       Adding .is-in only asks for a transition; it does not guarantee one
+       runs. If the animation timeline is stalled, or transitions are disabled
+       by the environment, an element can carry .is-in and still compute to
+       opacity 0, which means invisible content. This forces the end state
+       inline with transitions off, so visibility never depends on an animation
+       completing. In a healthy browser the reveal has already finished by now
+       and this changes nothing on screen. */
+    function forceVisible() {
+      document.querySelectorAll('[data-reveal]').forEach((el) => {
+        el.classList.add('is-in');
+        el.style.transition = 'none';
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      });
+    }
+
+    function scan() {
+      sweep();
+      setTimeout(forceVisible, 2500);
+    }
+
+    scan();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+
+    /* Client-side navigation swaps the DOM without re-running inline scripts,
+       so this listener is what keeps reveals working after the first page. */
+    document.addEventListener('astro:page-load', scan);
+
+    const onChange = reduced.addEventListener
+      ? reduced.addEventListener.bind(reduced, 'change')
+      : reduced.addListener.bind(reduced);
+    onChange(scan);
+  })();
+</script>
+
+<style is:global>
+  /* Gated on the attribute the script sets, so this never applies without JS. */
+  [data-reveal-ready] [data-reveal] {
+    opacity: 0;
+    /* Small on purpose. A big travel reads as a slide-in widget; this should
+       read as the page settling. */
+    transform: translateY(14px);
+    transition:
+      opacity 640ms var(--ease-settle),
+      transform 640ms var(--ease-settle);
+    /* Hints the compositor without leaving a permanent layer behind. */
+    will-change: opacity, transform;
+  }
+
+  [data-reveal-ready] [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+
+  /* Staggers children of a marked group by their index, so a row of cards
+     arrives in sequence rather than as one block. Set --i on each child. */
+  [data-reveal-ready] [data-reveal][style*='--i'] {
+    transition-delay: calc(var(--i) * 90ms);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal-ready] [data-reveal] {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>

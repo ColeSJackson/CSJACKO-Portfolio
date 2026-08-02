@@ -2,12 +2,12 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
-import Scorecard from '../components/Scorecard.astro';
+import Proudest from '../components/Proudest.astro';
 import ContactFooter from '../components/ContactFooter.astro';
 
-/* Featured only. The full index lives at /work: a hiring manager should get
-   the range from this page in one screen, and the volume only if they go
-   looking for it. */
+/* The proudest three. The full index lives at /work: someone should get the
+   range from this page in one screen, and the volume only if they go looking
+   for it. */
 const featured = (await getCollection('work', ({ data }) => !data.draft))
   .filter((entry) => entry.data.featured)
   .sort((a, b) => (a.data.round ?? 99) - (b.data.round ?? 99));
@@ -19,6 +19,6 @@ const featured = (await getCollection('work', ({ data }) => !data.draft))
   logo={false}
 >
   <Hero />
-  <Scorecard entries={featured} />
+  <Proudest entries={featured} />
   <ContactFooter />
 </Base>
