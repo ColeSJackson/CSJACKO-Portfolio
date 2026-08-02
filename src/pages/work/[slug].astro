@@ -8,6 +8,7 @@
 import type { GetStaticPaths } from 'astro';
 import { getCollection, render } from 'astro:content';
 import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import Base from '../../layouts/Base.astro';
 import Figure from '../../components/Figure.astro';
 import StatStrip from '../../components/StatStrip.astro';
@@ -29,6 +30,19 @@ const { Content } = await render(entry);
 /* Same test the Proudest card uses, so a withheld piece is flagged identically
    in both places rather than the two drifting apart. */
 const withheld = /^CONFIDENTIAL/i.test(d.statement);
+
+/* An optional screenshot of the work in the wild, keyed by slug: drop
+   src/assets/work/<slug>-site.<ext> and it appears beside the header copy.
+   Globbed rather than declared in frontmatter so a missing file is simply an
+   absent panel, not a build error. */
+const siteShots = import.meta.glob<{ default: ImageMetadata }>(
+  '../../assets/work/*-site.{jpg,jpeg,png,webp}',
+  { eager: true },
+);
+const shotEntry = Object.entries(siteShots).find(([path]) =>
+  path.split('/').pop()!.startsWith(`${entry.id}-site.`),
+);
+const siteShot = shotEntry?.[1].default;
 ---
 
 <Base title={`${d.title} / ${d.client} / Cole SJ`} description={d.summary} ground="bone">
@@ -38,8 +52,9 @@ const withheld = /^CONFIDENTIAL/i.test(d.statement);
       {d.placeholder && <span class="pill cs__flag">Placeholder entry</span>}
     </nav>
 
-    <header class="cs__head">
-      <p class="cs__meta label">
+    <header class:list={['cs__head', siteShot && 'cs__head--split']}>
+      <div class="cs__intro">
+        <p class="cs__meta label">
         <span>{DISCIPLINE_LABEL[d.discipline]}</span>
         <span>{d.client}</span>
         <span>{CONTEXT_LABEL[d.context]}</span>
@@ -76,6 +91,24 @@ const withheld = /^CONFIDENTIAL/i.test(d.statement);
           </a>
         </p>
       )}
+      </div>
+
+      {siteShot && (
+        <figure class="cs__site">
+          <Picture
+            src={siteShot}
+            alt={`The ${d.client} site showing the work live.`}
+            formats={['avif', 'webp']}
+            fallbackFormat="jpg"
+            widths={[600, 900, 1400]}
+            sizes="(min-width: 900px) 46vw, 92vw"
+            loading="eager"
+            decoding="async"
+            class="cs__site-img"
+          />
+        </figure>
+      )}
+
     </header>
 
     <StatStrip stats={d.stats} publicResults={d.publicResults} />
@@ -184,6 +217,38 @@ const withheld = /^CONFIDENTIAL/i.test(d.statement);
 
   /* Already caps in the markup; uppercase here guarantees nothing inherited
      can downcase it. */
+  /* Two columns once there is a screenshot to show: copy left, the work in the
+     wild right. Without one the header is a single column exactly as before,
+     so a piece with no screenshot loses nothing. */
+  .cs__head--split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items: center;
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+  }
+
+  .cs__site {
+    margin: 0;
+    border-radius: clamp(0.75rem, 1.6vw, 1.25rem);
+    overflow: hidden;
+    background-color: var(--color-corner-lift);
+    /* The screenshot is of a light site sitting in a dark room, so it needs an
+       edge or it floats. */
+    border: 1px solid color-mix(in srgb, var(--color-ink) 18%, transparent);
+  }
+
+  .cs__site-img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 900px) {
+    .cs__head--split {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
   .cs__confidential {
     margin: 0 0 1.1rem;
     font-family: var(--font-utility);

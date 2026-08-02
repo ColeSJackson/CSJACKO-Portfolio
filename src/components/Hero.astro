@@ -170,12 +170,20 @@ const DISCIPLINES = [
     position: relative;
   }
 
-  /* Sits above and left of the row, arrow curving down into the Shoot chip.
-     Percentages, so it follows the row as the fit solver resizes it. */
-  .hero__chalk {
-    left: -1%;
-    bottom: 100%;
-    margin-bottom: -0.4rem;
+  /* Sits under the row with the arrow curving up into the Shoot chip, so it
+     points at the button rather than crossing over it.
+
+     :global is required, not stylistic. Astro scopes styles by stamping this
+     component's id onto elements in THIS template; the annotation's root
+     element carries the annotation component's id instead, so a plain
+     .hero__chalk selector compiles to one that matches nothing and the offsets
+     silently never apply. That is what left it pinned at the row's top edge
+     instead of below it. Scoping the parent and globalling the child gives the
+     rule something real to match. */
+  .hero__disciplines :global(.chalk) {
+    left: 0;
+    top: 100%;
+    margin-top: -0.5rem;
   }
 
   .hero__row {
@@ -303,6 +311,16 @@ const DISCIPLINES = [
     color: var(--color-flare);
     writing-mode: vertical-rl;
     margin: 0;
+  }
+
+  /* The annotation hangs below the button row, and on a phone the bio card
+     follows immediately, so the handwriting ran underneath it. This is the
+     clearance the annotation needs; above 768px it is hidden anyway and the
+     normal rhythm applies. */
+  @media (max-width: 768px) {
+    .hero__foot {
+      margin-top: clamp(4rem, 11vh, 5.5rem);
+    }
   }
 
   @media (max-width: 640px) {
