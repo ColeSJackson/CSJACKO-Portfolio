@@ -12,7 +12,7 @@ export const SITE = {
   brand: 'CSJACKO',
 
   /** Real. */
-  email: 'cjjackson616@gmail.com',
+  email: 'cjjackson616@outlook.com',
 
   /** TODO: replace with the real profile slug. Currently a dead LinkedIn URL. */
   linkedin: 'https://www.linkedin.com/in/',

@@ -59,14 +59,14 @@ const DISCIPLINES = [
     <div class="bio">
       <div class="bio__copy">
         <p class="text-pretty">
-          Hey I&rsquo;m Cole! I&rsquo;m a super bubbly and creative Content and
+          Hey I&rsquo;m Cole! I&rsquo;m a super creative and bubbly Content and
           Digital Marketing Executive. I currently work for Motohaus
           Powersports, and their portfolio of 9 Motorcycle accessory brands.
           Outside of my full time work, I run a freelance side hustle where I do
           event/sport photography.
         </p>
         <p class="text-pretty">
-          I feel happiest when I have creative freedom, Check out my portfolio
+          I&rsquo;m happiest when I have creative freedom, Check out my portfolio
           while you&rsquo;re here!
         </p>
         <p class="bio__sign">- Cole SJ</p>
@@ -113,6 +113,12 @@ const DISCIPLINES = [
     width: max-content;
     max-width: none;
     white-space: nowrap;
+    /* When the solver runs, each line is exactly the container width and this
+       does nothing. When it has not run yet, or cannot, the line is narrower
+       than the container and max-content would pin it to the left edge. This
+       makes the unsolved state centred instead, so the failure mode is "not
+       quite fitted" rather than "visibly shoved left". */
+    margin-inline: auto;
 
     /* Entrance is pure CSS and depends on nothing. If the fit script never
        runs, the lines still arrive, just unfitted, rather than staying

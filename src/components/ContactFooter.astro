@@ -9,6 +9,9 @@
 
 import { SITE } from '../config';
 
+/* A LinkedIn URL with nothing after /in/ is the placeholder, not a profile. */
+const hasLinkedIn = /linkedin\.com\/in\/.+/.test(SITE.linkedin);
+
 const LINES = [{ text: 'GET IN' }, { text: 'TOUCH' }] as const;
 ---
 
@@ -35,14 +38,21 @@ const LINES = [{ text: 'GET IN' }, { text: 'TOUCH' }] as const;
           <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
         </dd>
       </div>
-      <div>
-        <dt class="label">LinkedIn</dt>
-        <dd>
-          <a href={SITE.linkedin} target="_blank" rel="noopener">
-            {SITE.name}
-          </a>
-        </dd>
-      </div>
+      {/* Only rendered once it points somewhere. The placeholder in config is
+          the bare /in/ path, which is a dead link, and a dead link in a contact
+          block is worse than one fewer row: it reads as carelessness at exactly
+          the moment someone is deciding whether to get in touch. Fill in the
+          real slug and this reappears on its own. */}
+      {hasLinkedIn && (
+        <div>
+          <dt class="label">LinkedIn</dt>
+          <dd>
+            <a href={SITE.linkedin} target="_blank" rel="noopener">
+              {SITE.name}
+            </a>
+          </dd>
+        </div>
+      )}
       <div>
         <dt class="label">CV</dt>
         <dd>
@@ -89,6 +99,10 @@ const LINES = [{ text: 'GET IN' }, { text: 'TOUCH' }] as const;
   .contact__line {
     /* Shrink-to-fit is load-bearing: the solver measures offsetWidth. */
     width: max-content;
+    /* Same reason as the hero lockup: solved, each line is exactly the
+       container width and this does nothing; unsolved, max-content would pin
+       it left. Centred is the right failure. */
+    margin-inline: auto;
     font-size: calc(clamp(3rem, 20vw, 17rem) * var(--fit-scale, 1));
     white-space: nowrap;
     line-height: 0.84;

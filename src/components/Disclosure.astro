@@ -1,0 +1,126 @@
+---
+/**
+ * A collapsible section.
+ *
+ * The site-wide answer to a page that stacks several long sections: nobody
+ * should have to scroll past one to discover the next exists. Headers sit
+ * together at the top, and opening one expands it in place.
+ *
+ * Built on native <details>/<summary> rather than a div and a click handler.
+ * That is not laziness, it is the better component: it opens with Enter or
+ * Space, exposes the right role and expanded state to a screen reader without
+ * a single aria attribute, is findable by the browser's own in-page search,
+ * and it works with JavaScript disabled or broken. A hand-rolled accordion has
+ * to reimplement all of that and usually reimplements some of it wrong.
+ *
+ * `meta` is the count or period shown on the right of the header. It matters
+ * more than it looks: with every section closed, it is the only thing telling
+ * you whether a section holds two items or twenty-four.
+ */
+
+interface Props {
+  title: string;
+  meta?: string;
+  /** Open on load. Off by default: the point is that the headers are the page. */
+  open?: boolean;
+}
+
+const { title, meta, open = false } = Astro.props;
+---
+
+<details class="dis" open={open}>
+  <summary class="dis__head">
+    <span class="dis__title">{title}</span>
+    {meta && <span class="dis__meta label">{meta}</span>}
+    <span class="dis__mark" aria-hidden="true"></span>
+  </summary>
+
+  <div class="dis__body">
+    <slot />
+  </div>
+</details>
+
+<style>
+  .dis {
+    border-block-end: 1px solid
+      color-mix(in srgb, var(--color-bone) 18%, transparent);
+  }
+
+  .dis:first-of-type {
+    border-block-start: 1px solid
+      color-mix(in srgb, var(--color-bone) 18%, transparent);
+  }
+
+  .dis__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 1rem;
+    padding-block: clamp(1.1rem, 2.5vh, 1.6rem);
+    cursor: pointer;
+    /* The default triangle cannot be styled and sits in the wrong place. */
+    list-style: none;
+    transition: color 200ms var(--ease-settle);
+  }
+
+  .dis__head::-webkit-details-marker {
+    display: none;
+  }
+
+  .dis__head:hover .dis__title,
+  .dis__head:focus-visible .dis__title {
+    color: var(--color-flare);
+  }
+
+  .dis__head:focus-visible {
+    outline: 2px solid var(--color-tape);
+    outline-offset: 3px;
+  }
+
+  .dis__title {
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    transition: color 200ms var(--ease-settle);
+  }
+
+  .dis__meta {
+    opacity: 0.55;
+    white-space: nowrap;
+  }
+
+  /* A plus that becomes a minus. Drawn from two bars rather than a glyph so it
+     stays optically centred at any size and needs no icon font. */
+  .dis__mark {
+    position: relative;
+    width: 1.05rem;
+    height: 1.05rem;
+    flex: none;
+  }
+
+  .dis__mark::before,
+  .dis__mark::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 2px;
+    background-color: var(--color-flare);
+    transform: translateY(-50%);
+    transition: transform 260ms var(--ease-settle);
+  }
+
+  .dis__mark::after {
+    transform: translateY(-50%) rotate(90deg);
+  }
+
+  .dis[open] .dis__mark::after {
+    transform: translateY(-50%) rotate(0deg);
+  }
+
+  .dis__body {
+    padding-block-end: clamp(1.5rem, 4vh, 2.5rem);
+  }
+</style>

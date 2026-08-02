@@ -67,22 +67,34 @@ function allGroups(): HTMLElement[] {
 }
 
 /* The hero and the footer both import this, and on the home page both run. The
-   solve itself is idempotent, but the resize listener must only bind once. */
+   solve itself is idempotent, but the listeners must only bind once. */
 let bound = false;
 
-export function initFit(): void {
-  if (!allGroups().length) return;
-
+function solveAll(): void {
   /* Solving against the fallback face would produce widths that jump the moment
      the real font arrives. */
   document.fonts.ready.then(() => {
     allGroups().forEach(fitGroup);
   });
+}
+
+export function initFit(): void {
+  if (!allGroups().length) return;
+
+  solveAll();
 
   if (bound) return;
   bound = true;
 
-  let raf = 0;
+  /* Client-side navigation swaps the DOM without re-running this module, so
+     returning to the homepage left the lockup unsolved: --fit-scale was never
+     written, the lines fell back to their clamp size, and being max-content
+     they sat hard against the left edge. That is the "loses its centring after
+     the intro" bug. This listener is registered once and survives every later
+     navigation. */
+  document.addEventListener('astro:page-load', solveAll);
+
+  let timer = 0;
   let lastWidth = window.innerWidth;
 
   window.addEventListener(
@@ -93,8 +105,11 @@ export function initFit(): void {
       if (window.innerWidth === lastWidth) return;
       lastWidth = window.innerWidth;
 
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => allGroups().forEach(fitGroup));
+      /* A timeout rather than requestAnimationFrame: rAF is tied to the
+         compositor and does not fire in every environment, and a missed solve
+         here is a visibly broken lockup. */
+      clearTimeout(timer);
+      timer = window.setTimeout(() => allGroups().forEach(fitGroup), 120);
     },
     { passive: true },
   );

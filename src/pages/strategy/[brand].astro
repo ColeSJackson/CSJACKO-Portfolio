@@ -14,6 +14,7 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import ContactFooter from '../../components/ContactFooter.astro';
+import Disclosure from '../../components/Disclosure.astro';
 import {
   BRANDS,
   BRAND_LABEL,
@@ -58,17 +59,34 @@ const dated = plans.reduce(
       </p>
     </header>
 
+    <p class="bp__intro text-pretty">
+      Each programme below opens in place. Dates sit on the pieces themselves,
+      so nothing is buried under a month heading.
+    </p>
+
     {
       plans.map((plan) => {
         const d = plan.data;
+
+        /* Flattened deliberately. The data still groups by month or quarter,
+           because that is how the plans were written and it may be useful
+           again, but the page does not render those headings: every piece
+           already carries its own date, so a month heading above it was a
+           second place to read the same thing and a long stack to scroll. */
+        const items = d.groups.flatMap((g) => g.items);
+
         return (
-          <article class="plan" data-reveal>
-            <header class="plan__head">
-              <p class="plan__strand label">{STRAND_LABEL[d.strand]}</p>
-              <h2 class="plan__title">{d.title}</h2>
-              <p class="plan__period label">{d.period}</p>
-              <p class="plan__summary text-pretty">{d.summary}</p>
-            </header>
+          <Disclosure
+            title={d.title}
+            meta={
+              items.length > 0
+                ? `${d.period} / ${items.length} ${
+                    d.strand === 'email' ? 'sends' : 'dates'
+                  }`
+                : d.period
+            }
+          >
+            <p class="plan__summary text-pretty">{d.summary}</p>
 
             {d.cadence.length > 0 && (
               <dl class="cad">
@@ -85,70 +103,60 @@ const dated = plans.reduce(
               <p class="plan__platforms label">{d.platforms.join(' / ')}</p>
             )}
 
-            {d.groups.map((group) => (
-              <section class="grp">
-                <h3 class="grp__head label">
-                  {group.label}
-                  <span class="grp__count">{group.items.length}</span>
-                </h3>
-
-                {/* Email sends are cards; everything else stays a schedule.
-                    A send has a subject and a preview line to show, which is
-                    card-shaped content. A video shoot date is a date and a
-                    title, and a card of that is a lot of box around very
-                    little. */}
-                {d.strand === 'email' ? (
-                  <ul class="cards">
-                    {group.items.map((item) => (
-                      <li class="ec">
-                        <p class="ec__title">{item.title}</p>
-                        {item.date && <p class="ec__date">{item.date}</p>}
-                        {/* Placeholders until the real copy is written, so the
-                            card shows its full shape rather than looking
-                            half-built. Filling in `subject` and `preview` on
-                            the entry replaces them. */}
-                        <p
-                          class:list={[
-                            'ec__subject',
-                            'text-pretty',
-                            !item.subject && 'is-placeholder',
-                          ]}
-                        >
-                          {item.subject ?? 'SUBJECT LINE'}
-                        </p>
-                        <p
-                          class:list={[
-                            'ec__preview',
-                            'text-pretty',
-                            !(item.preview ?? item.note) && 'is-placeholder',
-                          ]}
-                        >
-                          {item.preview ?? item.note ?? 'PREVIEW TEXT'}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <ol class="grp__list">
-                    {group.items.map((item) => (
-                      <li class="row">
-                        <span class="row__date">{item.date}</span>
-                        <span class="row__body">
-                          <span class="row__title">{item.title}</span>
-                          {item.note && (
-                            <span class="row__note">{item.note}</span>
-                          )}
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </section>
-            ))}
-          </article>
+            {/* Email sends are cards; everything else stays a schedule. A send
+                has a subject and a preview line to show, which is card-shaped
+                content. A video shoot date is a date and a title, and a card of
+                that is a lot of box around very little. */}
+            {items.length > 0 &&
+              (d.strand === 'email' ? (
+                <ul class="cards">
+                  {items.map((item) => (
+                    <li class="ec">
+                      <p class="ec__title">{item.title}</p>
+                      {item.date && <p class="ec__date">{item.date}</p>}
+                      {/* Placeholders until the real copy is written, so the
+                          card shows its full shape rather than looking
+                          half-built. Filling in `subject` and `preview` on the
+                          entry replaces them. */}
+                      <p
+                        class:list={[
+                          'ec__subject',
+                          'text-pretty',
+                          !item.subject && 'is-placeholder',
+                        ]}
+                      >
+                        {item.subject ?? 'SUBJECT LINE'}
+                      </p>
+                      <p
+                        class:list={[
+                          'ec__preview',
+                          'text-pretty',
+                          !(item.preview ?? item.note) && 'is-placeholder',
+                        ]}
+                      >
+                        {item.preview ?? item.note ?? 'PREVIEW TEXT'}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ol class="grp__list">
+                  {items.map((item) => (
+                    <li class="row">
+                      <span class="row__date">{item.date}</span>
+                      <span class="row__body">
+                        <span class="row__title">{item.title}</span>
+                        {item.note && <span class="row__note">{item.note}</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              ))}
+          </Disclosure>
         );
       })
     }
+
   </section>
 
   <ContactFooter />
@@ -160,65 +168,15 @@ const dated = plans.reduce(
     padding-block-end: var(--spacing-room);
   }
 
-  .bp__head {
-    margin-bottom: clamp(2rem, 6vh, 4rem);
-  }
-
-  .bp__head a {
-    color: var(--color-bone);
-    text-decoration: none;
-    transition:
-      background-color 180ms var(--ease-settle),
-      color 180ms var(--ease-settle);
-  }
-
-  .bp__head a:hover {
-    background-color: var(--color-flare);
-    color: var(--color-bone);
-  }
-
-  .bp__title {
-    font-family: var(--font-display);
-    line-height: 1;
-    text-transform: uppercase;
-    letter-spacing: -0.01em;
-    color: var(--color-flare);
-    margin: 0;
-  }
-
-  .bp__count {
-    opacity: 0.55;
-    margin: 0;
-  }
-
-  .plan {
-    margin-bottom: var(--spacing-room);
-  }
-
-  .plan__head {
-    max-width: 62ch;
-  }
-
-  .plan__strand {
-    color: var(--color-flare);
-    margin: 0 0 0.5rem;
-  }
-
-  .plan__title {
-    font-family: var(--font-display);
-    font-size: var(--text-step-2);
-    line-height: 1.05;
-    text-transform: uppercase;
-    letter-spacing: -0.01em;
-    margin: 0 0 0.4rem;
-  }
-
-  .plan__period {
-    opacity: 0.55;
-    margin: 0 0 1rem;
+  .bp__intro {
+    max-width: 56ch;
+    margin: 0 0 clamp(1.5rem, 4vh, 2.5rem);
+    font-size: var(--text-step-0);
+    opacity: 0.6;
   }
 
   .plan__summary {
+    max-width: 62ch;
     margin: 0;
     /* Was step-0, the same size as a caption. This is the paragraph that
        explains the whole programme, so it reads at body-plus. */
@@ -230,50 +188,6 @@ const dated = plans.reduce(
   .plan__platforms {
     opacity: 0.55;
     margin: 1rem 0 0;
-  }
-
-  /* The rhythm, stated once. */
-  .cad {
-    display: flex;
-    flex-wrap: wrap;
-    gap: clamp(1.5rem, 4vw, 3rem);
-    margin: 1.75rem 0 0;
-    padding-block: 1.25rem;
-    border-block: 1px solid
-      color-mix(in srgb, var(--color-bone) 22%, transparent);
-  }
-
-  .cad__item dt {
-    opacity: 0.6;
-    margin-bottom: 0.4rem;
-  }
-
-  .cad__item dd {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--text-step-2);
-    line-height: 1;
-    color: var(--color-flare);
-  }
-
-  .grp {
-    margin-top: clamp(1.75rem, 4vh, 2.5rem);
-  }
-
-  .grp__head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1rem;
-    font-size: var(--text-step-0);
-    margin: 0 0 1.15rem;
-    padding-block-end: 0.7rem;
-    border-block-end: 1px solid
-      color-mix(in srgb, var(--color-bone) 28%, transparent);
-  }
-
-  .grp__count {
-    opacity: 0.55;
   }
 
   .grp__list {
