@@ -29,16 +29,12 @@ const { entries } = Astro.props;
 /* A withheld piece is still worth listing: that it exists and cannot be shown
    yet is itself information. It just needs saying plainly rather than leaving
    a reader wondering why the block is thin. */
-const isWithheld = (e: CollectionEntry<'work'>) =>
-  /^CONFIDENTIAL/i.test(e.data.statement);
+const isWithheld = (e: CollectionEntry<'work'>) => e.data.confidential;
 ---
 
 <section class="proud room" id="featured" aria-labelledby="proud-heading">
   <header class="proud__head">
     <h2 id="proud-heading" class="proud__heading">Proudest work</h2>
-    <p class="proud__note label">
-      The three I would show first
-    </p>
   </header>
 
   <ul class="proud__list">
@@ -59,18 +55,19 @@ const isWithheld = (e: CollectionEntry<'work'>) =>
                 /
               </span>
               <span class="pw__year label">{d.year}</span>
-              {withheld && <span class="pw__flag">CONFIDENTIAL</span>}
             </div>
 
             <h3 class="pw__title">{d.title}</h3>
 
-            <p class="pw__statement text-pretty">
-              {withheld
-                ? 'Held back until the campaign runs. The write-up and the imagery go live when it does.'
-                : d.statement}
-            </p>
+            {withheld && <p class="pw__confidential">CONFIDENTIAL</p>}
 
-            {!withheld && <p class="pw__outcome text-pretty">{d.outcome}</p>}
+            {/* Summary carries the piece now. Statement and outcome are
+                optional, because some work explains itself and padding it out
+                for the template's sake reads worse than leaving it out. */}
+            <p class="pw__statement text-pretty">{d.summary}</p>
+
+            {d.statement && <p class="pw__outcome text-pretty">{d.statement}</p>}
+            {d.outcome && <p class="pw__outcome text-pretty">{d.outcome}</p>}
 
             {d.externalUrl && (
               <p class="pw__credit">
@@ -189,18 +186,16 @@ const isWithheld = (e: CollectionEntry<'work'>) =>
 
      text-transform is uppercase, not capitalize: the word is already caps in
      the markup, and this guarantees no inherited rule can downcase it. */
-  .pw__flag {
-    margin-inline-start: 0.35rem;
-    padding: 0.2em 0.6em;
-    font-family: var(--font-utility);
-    font-size: var(--text-step--2);
+  /* Big, because it is the whole reason the entry is thin. Already caps in the
+     markup; uppercase over the top guarantees nothing inherited downcases it. */
+  .pw__confidential {
+    margin: 0 0 0.9rem;
+    font-family: var(--font-display);
+    font-size: var(--text-step-2);
+    line-height: 1;
     text-transform: uppercase;
-    letter-spacing: 0.16em;
-    line-height: 1.2;
-    border: 1px solid var(--color-flare);
-    border-radius: 0.25rem;
+    letter-spacing: 0.14em;
     color: var(--color-flare);
-    opacity: 1;
   }
 
   .pw__credit {

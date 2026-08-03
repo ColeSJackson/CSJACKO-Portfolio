@@ -155,8 +155,13 @@ const work = defineCollection({
       round: z.number().int().optional(),
 
       summary: z.string(), // one line, for the index
-      statement: z.string(), // the bold opening sentence on the detail page
-      outcome: z.string(), // what changed
+
+      /* Optional, because not every piece needs them. Some work explains
+         itself in a summary and a credit line, and padding it out with a
+         statement written for the sake of the template reads worse than
+         leaving it out. Anything rendering these must handle their absence. */
+      statement: z.string().optional(),
+      outcome: z.string().optional(),
 
       cover: image(),
       coverAlt: z.string(),
@@ -170,6 +175,11 @@ const work = defineCollection({
       stats: z
         .array(z.object({ label: z.string(), value: z.string() }))
         .default([]),
+
+      /* Marks a piece as withheld. Was inferred by testing whether `statement`
+         began with CONFIDENTIAL, which broke the moment a statement became
+         optional, and tied a display state to the wording of a sentence. */
+      confidential: z.boolean().default(false),
 
       /* Where the work actually lives, when it is public. Rendered as a
          credited link out, so a reader can go and see it running rather than
@@ -186,7 +196,7 @@ const work = defineCollection({
             /* Names the group, so one piece can separate Product from
                Lifestyle rather than running both into one wall. */
             label: z.string().optional(),
-            statement: z.string(),
+            statement: z.string().optional(),
             outcome: z.string().optional(),
             assets: z.array(asset).default([]),
           }),

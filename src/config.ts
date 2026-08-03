@@ -24,5 +24,6 @@ export const SITE = {
   location:
     'Farnborough, Hampshire. Commutable to London, happy to work remote.',
 
-  lookingFor: 'A full-time content, social or brand role on a marketing team.',
+  lookingFor:
+    'A full-time content, social or brand role on a marketing team. Marketing Executive and similar titles would suit me best :)',
 } as const;

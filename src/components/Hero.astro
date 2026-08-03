@@ -432,7 +432,7 @@ const DISCIPLINES = [
      vertically. They need more room below to land in. */
   @media (max-width: 700px) {
     .hero__foot {
-      margin-top: clamp(9.5rem, 22vh, 13rem);
+      margin-top: clamp(6rem, 14vh, 8.5rem);
     }
 
     /* The drop is in viewBox units, so it scales with the annotation's width:
@@ -449,20 +449,21 @@ const DISCIPLINES = [
       left: 0;
     }
 
-    /* Each step has to clear the whole of the block above it, not just its
-       first line. These notes run to three and five lines on a phone, so a step
-       shorter than a block's height leaves the bottom of one sitting on the top
-       of the next. */
+    /* Only a hair of stagger. Pushing the handwriting far enough down to clear
+       a whole neighbouring block is what detached it from its arrow, which is
+       the worse fault: an annotation whose words have floated away from its
+       line has stopped being an annotation. Separation comes from each note
+       being narrow enough to sit under its own chip instead. */
     .hero__word:nth-child(2) :global(.chalk__text) {
-      margin-top: 2.3rem;
+      margin-top: 0.35rem;
     }
 
     .hero__word:nth-child(3) :global(.chalk__text) {
-      margin-top: 4.8rem;
+      margin-top: 0.7rem;
     }
 
     .hero__word:nth-child(4) :global(.chalk__text) {
-      margin-top: 7.2rem;
+      margin-top: 1.05rem;
     }
   }
 

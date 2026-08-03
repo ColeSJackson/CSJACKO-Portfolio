@@ -27,9 +27,9 @@ const { entry } = Astro.props;
 const d = entry.data;
 const { Content } = await render(entry);
 
-/* Same test the Proudest card uses, so a withheld piece is flagged identically
+/* Same source as the Proudest card, so a withheld piece is flagged identically
    in both places rather than the two drifting apart. */
-const withheld = /^CONFIDENTIAL/i.test(d.statement);
+const withheld = d.confidential;
 
 /* An optional screenshot of the work in the wild, keyed by slug: drop
    src/assets/work/<slug>-site.<ext> and it appears beside the header copy.
@@ -52,7 +52,7 @@ const siteShot = shotEntry?.[1].default;
       {d.placeholder && <span class="pill cs__flag">Placeholder entry</span>}
     </nav>
 
-    <header class:list={['cs__head', siteShot && 'cs__head--split']}>
+    <header class:list={['cs__head', 'cs__head--split']}>
       <div class="cs__intro">
         <p class="cs__meta label">
         <span>{DISCIPLINE_LABEL[d.discipline]}</span>
@@ -65,8 +65,9 @@ const siteShot = shotEntry?.[1].default;
 
       {withheld && <p class="cs__confidential">CONFIDENTIAL</p>}
 
-      <p class="cs__statement text-balance">{d.statement}</p>
-      <p class="cs__outcome text-pretty">{d.outcome}</p>
+      <p class="cs__statement text-balance">{d.summary}</p>
+      {d.statement && <p class="cs__outcome text-pretty">{d.statement}</p>}
+      {d.outcome && <p class="cs__outcome text-pretty">{d.outcome}</p>}
 
       {d.externalUrl && (
         <p class="cs__credit">
@@ -92,6 +93,12 @@ const siteShot = shotEntry?.[1].default;
         </p>
       )}
       </div>
+
+      {!siteShot && (
+        <div class="cs__site cs__site--empty" aria-hidden="true">
+          <span class="label">Image coming</span>
+        </div>
+      )}
 
       {siteShot && (
         <figure class="cs__site">
@@ -133,7 +140,9 @@ const siteShot = shotEntry?.[1].default;
           <section class="block">
             <div class="block__copy">
               {block.label && <p class="block__label">{block.label}</p>}
-              <h2 class="block__statement text-balance">{block.statement}</h2>
+              {block.statement && (
+                <h2 class="block__statement text-balance">{block.statement}</h2>
+              )}
               {block.outcome && (
                 <p class="block__outcome text-pretty">{block.outcome}</p>
               )}
@@ -237,6 +246,17 @@ const siteShot = shotEntry?.[1].default;
     border: 1px solid color-mix(in srgb, var(--color-ink) 18%, transparent);
   }
 
+  /* Holds the slot's space before the screenshot exists, so the layout is
+     final now rather than shifting when one is dropped in. */
+  .cs__site--empty {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 10;
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--color-ink) 28%, transparent);
+    opacity: 0.5;
+  }
+
   .cs__site-img {
     display: block;
     width: 100%;
@@ -251,10 +271,11 @@ const siteShot = shotEntry?.[1].default;
 
   .cs__confidential {
     margin: 0 0 1.1rem;
-    font-family: var(--font-utility);
-    font-size: var(--text-step--1);
+    font-family: var(--font-display);
+    font-size: var(--text-step-3);
+    line-height: 1;
     text-transform: uppercase;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.12em;
     color: var(--color-flare);
   }
 
