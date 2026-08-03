@@ -293,11 +293,15 @@
     height: 90vmax;
     border-radius: 50%;
     will-change: transform;
+    /* Roughly half the previous strength at every stop. The blooms are what
+       lift the page off black, so this is the one dial that controls how dark
+       the site reads; the grounds themselves were already near-black. Turned
+       down because the glow was carrying more of the screen than the work was. */
     background: radial-gradient(
       circle at 50% 50%,
-      color-mix(in srgb, var(--color-flare) 42%, transparent) 0%,
-      color-mix(in srgb, var(--color-flare) 16%, transparent) 32%,
-      color-mix(in srgb, var(--color-flare-deep) 6%, transparent) 55%,
+      color-mix(in srgb, var(--color-flare) 22%, transparent) 0%,
+      color-mix(in srgb, var(--color-flare) 8%, transparent) 32%,
+      color-mix(in srgb, var(--color-flare-deep) 3%, transparent) 55%,
       transparent 72%
     );
   }
