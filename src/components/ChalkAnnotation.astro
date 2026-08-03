@@ -52,7 +52,12 @@ const uid = `chalk-${Math.random().toString(36).slice(2, 8)}`;
 const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132 18 L 126 44`;
 ---
 
-<div
+{/* A span, not a div, and that matters. This gets nested inside the hero's
+    discipline chips, which live in a <p>. The HTML parser closes an open <p>
+    the moment it meets a block-level start tag, so a <div> root here silently
+    shattered the row into fragments and the lockup came apart. A span carries
+    display:flex just as well and keeps the paragraph intact. */}
+<span
   class:list={['chalk', `chalk--${side}`, className]}
   aria-hidden="true"
   data-chalk
@@ -84,7 +89,7 @@ const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132
   </svg>
 
   <span class="chalk__text">{text}</span>
-</div>
+</span>
 
 <style>
   .chalk {
@@ -99,7 +104,7 @@ const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132
     flex-direction: column;
     align-items: flex-start;
     gap: 0.15rem;
-    width: clamp(7.5rem, 13vw, 11rem);
+    width: clamp(6rem, 8.5vw, 8.5rem);
   }
 
   .chalk--right {
@@ -140,9 +145,16 @@ const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132
   }
 
   .chalk__text {
+    /* Both load-bearing. align-items:flex-start makes flex children
+       shrink-to-fit, and the hero row this now sits inside sets
+       white-space:nowrap, which the handwriting inherits. Either one alone
+       leaves it setting on a single long line that runs across its neighbours
+       rather than wrapping to the annotation. */
+    width: 100%;
+    white-space: normal;
     font-family: 'Caveat', sans-serif;
     font-weight: 600;
-    font-size: clamp(0.95rem, 1.9vw, 1.45rem);
+    font-size: clamp(0.8rem, 1.3vw, 1.05rem);
     line-height: 1.05;
     color: #f2efe6;
     opacity: 0.85;
@@ -204,7 +216,7 @@ const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132
     }
 
     .chalk__text {
-      font-size: 0.9rem;
+      font-size: 0.78rem;
     }
   }
 

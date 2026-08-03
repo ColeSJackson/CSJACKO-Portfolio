@@ -54,11 +54,37 @@ const bio = {
   fallback: await getImage({ src: colePortrait, format: 'jpeg', width: 700, quality: 82 }),
 };
 
+/* Each carries its own annotation. `curve` bows the arrow: they are varied so
+   four chalk marks in a row do not read as one shape stamped four times. */
 const DISCIPLINES = [
-  { word: 'SHOOT', href: '/shoot', label: 'Photography' },
-  { word: 'EDIT', href: '/edit', label: 'Video and reels' },
-  { word: 'DESIGN', href: '/design', label: 'Paid social, email and print design' },
-  { word: 'STRATEGY', href: '/strategy', label: 'Planning and content strategy' },
+  {
+    word: 'SHOOT',
+    href: '/shoot',
+    label: 'Photography',
+    note: 'My best photos everrr',
+    curve: 34,
+  },
+  {
+    word: 'EDIT',
+    href: '/edit',
+    label: 'Video and reels',
+    note: "Some cool videos I've made/edited",
+    curve: 62,
+  },
+  {
+    word: 'DESIGN',
+    href: '/design',
+    label: 'Paid social, email and print design',
+    note: 'emails, paid media and more sick designs :)',
+    curve: 20,
+  },
+  {
+    word: 'STRATEGY',
+    href: '/strategy',
+    label: 'Planning and content strategy',
+    note: "Social Media and Email Marketing strategy's inside! (They're really good)",
+    curve: 46,
+  },
 ];
 ---
 
@@ -74,21 +100,28 @@ const DISCIPLINES = [
     </h1>
 
     <nav class="hero__disciplines" aria-label="Work by discipline">
-      {/* Anchored to the discipline row, not the viewport, so it stays on the
-          Shoot button at every width. */}
-      <ChalkAnnotation
-        target="Shoot button"
-        text="My best photos everrr"
-        curve={34}
-        side="left"
-        class="hero__chalk"
-      />
-
       <p class="lockup hero__row" data-fit style="--i:1">
         {
           DISCIPLINES.map((d) => (
+            /* The annotation lives inside its own chip, so it hangs off THAT
+               button rather than off the row. Percentages against the row would
+               drift the moment the fit solver changed its width, and drift
+               differently at every breakpoint.
+
+               It goes inside the anchor rather than in a wrapper around it: a
+               wrapper adds a flex item the solver then measures, which threw
+               the whole lockup out. Nested here it is absolutely positioned and
+               out of flow, so the row measures exactly as it did before. It is
+               aria-hidden and pointer-events:none, so it adds nothing to the
+               link's name and cannot intercept its clicks. */
             <a class="hero__word" href={d.href} aria-label={d.label}>
               {d.word}
+              <ChalkAnnotation
+                target={`${d.word} button`}
+                text={d.note}
+                curve={d.curve}
+                side="left"
+              />
             </a>
           ))
         }
@@ -215,20 +248,27 @@ const DISCIPLINES = [
     position: relative;
   }
 
-  /* Sits under the row with the arrow curving up into the Shoot chip, so it
-     points at the button rather than crossing over it.
+  /* Sits under its own chip with the arrow curving up into it, so it points at
+     the button rather than crossing over it.
 
      :global is required, not stylistic. Astro scopes styles by stamping this
      component's id onto elements in THIS template; the annotation's root
-     element carries the annotation component's id instead, so a plain
-     .hero__chalk selector compiles to one that matches nothing and the offsets
-     silently never apply. That is what left it pinned at the row's top edge
-     instead of below it. Scoping the parent and globalling the child gives the
-     rule something real to match. */
-  .hero__disciplines :global(.chalk) {
+     element carries the annotation component's id instead, so a plain selector
+     here compiles to one that matches nothing and the offsets silently never
+     apply. Scoping the parent and globalling the child gives the rule
+     something real to match. */
+  .hero__word :global(.chalk) {
     left: 0;
     top: 100%;
     margin-top: -0.5rem;
+  }
+
+  /* Every other one drops lower. Four annotations hanging at the same height
+     under four adjacent chips collide no matter how narrow they are; staggered,
+     each has the neighbouring gap to itself, and the scatter reads more like
+     something written on by hand than a row of identical callouts. */
+  .hero__word:nth-child(even) :global(.chalk) {
+    margin-top: 2.6rem;
   }
 
   .hero__row {
@@ -254,6 +294,7 @@ const DISCIPLINES = [
      so the border only exists to keep the chip's edge crisp against the
      background and matches whichever fill is showing. */
   .hero__word {
+    position: relative;
     color: var(--color-bone);
     text-decoration: none;
     padding: 0.24em 0.4em 0.3em;
@@ -288,10 +329,11 @@ const DISCIPLINES = [
     justify-content: center;
     gap: 2rem;
 
-    /* Replaces the separation the byline used to provide. Without it the body
-       copy sits directly under the display row with only the hero's own gap
-       between them, and the two registers run together. */
-    margin-top: clamp(1.25rem, 3.5vh, 2.75rem);
+    /* Sized to clear the annotations, not just to separate the two registers.
+       Four chalk notes hang below the row and the staggered ones reach roughly
+       170px past it, so anything less and the handwriting lands on top of the
+       card. */
+    margin-top: clamp(7rem, 16vh, 13.5rem);
   }
 
   .bio {
@@ -350,13 +392,30 @@ const DISCIPLINES = [
     object-fit: cover;
   }
 
-  /* The annotation hangs below the button row, and on a phone the bio card
-     follows immediately, so the handwriting ran underneath it. This is the
-     clearance the annotation needs; above 768px it is hidden anyway and the
-     normal rhythm applies. */
+  /* Same clearance problem on a phone, and it was overriding the desktop value
+     with a smaller one. The stagger tightens here too: the chips are narrow
+     enough that a shorter drop still keeps neighbours apart. */
   @media (max-width: 768px) {
     .hero__foot {
-      margin-top: clamp(4rem, 11vh, 5.5rem);
+      margin-top: clamp(8.5rem, 20vh, 11rem);
+    }
+
+    .hero__word:nth-child(even) :global(.chalk) {
+      margin-top: 1.8rem;
+    }
+  }
+
+  /* Only the first annotation survives on a phone.
+
+     Not a preference: at 390px the chips are about 70px wide and the
+     annotation cannot go below roughly 96px without the handwriting breaking
+     to one word a line. Four of them therefore overlap each other no matter
+     how they are staggered, measured and confirmed. One that reads beats four
+     that collide, and the Shoot button is the one worth pointing at. All four
+     return at 700px, where there is room. */
+  @media (max-width: 700px) {
+    .hero__word:not(:first-child) :global(.chalk) {
+      display: none;
     }
   }
 
