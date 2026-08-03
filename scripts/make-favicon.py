@@ -24,6 +24,12 @@ from fontTools.misc.transform import Transform
 FONT = 'src/assets/fonts/groovy-madness.woff2'
 OUT = 'public/favicon.svg'
 BOX, PAD, GAP = 64, 4.5, 3.0
+
+# Corner radius on the black tile. About 19% of the box, which is roughly where
+# iOS and Android draw their own icon masks, so the shape reads as intended
+# rather than fighting whatever rounding the platform applies over it. The
+# corners become transparent, which is what lets it sit on any tab colour.
+RADIUS = 12
 LINES = ('CS', 'JACKO')
 BG, FG = '#000000', '#e62317'
 
@@ -98,7 +104,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {BOX} {BOX}" role
        Two lines because a favicon is seen at 16 to 32px, where CSJACKO across a
        single line solves to about 7px a letter. Each line is scaled on its own
        to fill the width, which is why CS sets larger than JACKO. -->
-  <rect width="{BOX}" height="{BOX}" fill="{BG}"/>
+  <rect width="{BOX}" height="{BOX}" rx="{RADIUS}" ry="{RADIUS}" fill="{BG}"/>
   <g fill="{FG}">
     <path d="{paths[0]}"/>
     <path d="{paths[1]}"/>
