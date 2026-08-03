@@ -106,11 +106,11 @@
      "an accent here and there": it carries the display type and the live
      states and nothing else. The moment it appears in three places on one
      screen it has stopped working. */
-  --color-ink: #050506; /* dominant ground. Near-black on purpose: the blooms
+  --color-ink: #000000; /* dominant ground. Near-black on purpose: the blooms
                             are the only thing meant to lift it. */
   --color-flare: #e62317; /* the red. Display type and live states only. */
   --color-bone: #efede8; /* off-white: body copy, utility caps, light room */
-  --color-corner: #08080a; /* second ground: media rooms, a hair off ink */
+  --color-corner: #000000; /* second ground: media rooms, a hair off ink */
   --color-tape: #efede8; /* focus rings. Bone reads on both ink and flare. */
 
   /* Derived tints. Not new colours, and not to be used as fills. flare-deep is
@@ -218,7 +218,7 @@
      the texture you saw was two layers, and one layer at the old value read
      as almost smooth. */
   :root {
-    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' exponent='3.4'/%3E%3CfeFuncG type='gamma' exponent='3.4'/%3E%3CfeFuncB type='gamma' exponent='3.4'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.42 0.42 0.42 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' exponent='3.4'/%3E%3CfeFuncG type='gamma' exponent='3.4'/%3E%3CfeFuncB type='gamma' exponent='3.4'/%3E%3C/feComponentTransfer%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.30 0.30 0.30 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   /* Every opaque surface on the site carries the texture. These are page and
@@ -290,8 +290,11 @@
   .field__blob {
     position: absolute;
     display: block;
-    width: 90vmax;
-    height: 90vmax;
+    /* Was 90vmax, which covered the whole viewport and lifted every pixel of
+       it. The references are mostly pure black with light concentrated in one
+       place, so these are half the size and fall off to nothing by 45%. */
+    width: 48vmax;
+    height: 48vmax;
     border-radius: 50%;
     will-change: transform, opacity;
   }
@@ -307,10 +310,9 @@
   .field__blob--b {
     background: radial-gradient(
       circle at 50% 50%,
-      color-mix(in srgb, var(--color-flare) 20%, transparent) 0%,
-      color-mix(in srgb, var(--color-flare) 7%, transparent) 34%,
-      color-mix(in srgb, var(--color-flare-deep) 3%, transparent) 56%,
-      transparent 72%
+      color-mix(in srgb, var(--color-flare) 16%, transparent) 0%,
+      color-mix(in srgb, var(--color-flare) 5%, transparent) 22%,
+      transparent 46%
     );
   }
 
@@ -319,10 +321,9 @@
   .field__blob--e {
     background: radial-gradient(
       circle at 50% 50%,
-      color-mix(in srgb, var(--color-bone) 13%, transparent) 0%,
-      color-mix(in srgb, var(--color-bone) 5%, transparent) 30%,
-      color-mix(in srgb, var(--color-bone) 2%, transparent) 52%,
-      transparent 70%
+      color-mix(in srgb, var(--color-bone) 11%, transparent) 0%,
+      color-mix(in srgb, var(--color-bone) 3%, transparent) 20%,
+      transparent 44%
     );
   }
 
@@ -349,8 +350,8 @@
   .field__blob--c {
     top: 18%;
     left: 42%;
-    width: 62vmax;
-    height: 62vmax;
+    width: 38vmax;
+    height: 38vmax;
     animation:
       drift-c 67s ease-in-out infinite alternate,
       breathe-strong 37s ease-in-out infinite alternate;
@@ -359,8 +360,8 @@
   .field__blob--d {
     bottom: -20vmax;
     left: 8%;
-    width: 70vmax;
-    height: 70vmax;
+    width: 44vmax;
+    height: 44vmax;
     animation:
       drift-d 73s ease-in-out infinite alternate,
       breathe-soft 29s ease-in-out infinite alternate;
@@ -369,21 +370,21 @@
   .field__blob--e {
     top: -28vmax;
     right: -10vmax;
-    width: 58vmax;
-    height: 58vmax;
+    width: 34vmax;
+    height: 34vmax;
     animation:
       drift-e 53s ease-in-out infinite alternate,
       breathe-strong 43s ease-in-out infinite alternate;
   }
 
   @keyframes breathe-strong {
-    from { opacity: 0.35; }
+    from { opacity: 0.15; }
     to   { opacity: 1; }
   }
 
   @keyframes breathe-soft {
-    from { opacity: 0.9; }
-    to   { opacity: 0.4; }
+    from { opacity: 0.85; }
+    to   { opacity: 0.12; }
   }
 
   @keyframes drift-d {
