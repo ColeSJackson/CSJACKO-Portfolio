@@ -135,14 +135,17 @@ const GROUND_CLASS = {
       </defs>
     </svg>
 
-    {/* The living ground. Three oversized red blooms drifting on black, each on
-        its own timing so they never visibly loop together. Purely decorative,
-        so it is hidden from assistive tech, and it only animates transform and
-        opacity so the compositor handles it without touching layout or paint. */}
+    {/* The living ground. Five oversized blooms drifting on black: two red and
+        three white light leaks, each on its own timing so they never visibly
+        loop together. Purely decorative, so it is hidden from assistive tech,
+        and it only animates transform and opacity so the compositor handles it
+        without touching layout or paint. */}
     <div class="field" aria-hidden="true">
       <span class="field__blob field__blob--a"></span>
       <span class="field__blob field__blob--b"></span>
       <span class="field__blob field__blob--c"></span>
+      <span class="field__blob field__blob--d"></span>
+      <span class="field__blob field__blob--e"></span>
     </div>
 
     <a
