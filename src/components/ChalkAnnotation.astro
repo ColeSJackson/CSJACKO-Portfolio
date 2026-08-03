@@ -28,6 +28,14 @@ interface Props {
   shape?: 'straight' | 'curve' | 'hook' | 'swoop';
   /** Rotation of the handwriting, in degrees. Varied so no two match. */
   tilt?: number;
+  /**
+   * How far the arrow's tail reaches below its tip, in viewBox units.
+   * This is what staggers a row of annotations: the tip stays pinned to the
+   * target and the LINE gets longer, so the handwriting travels down with the
+   * tail it is attached to. Offsetting the text on its own instead leaves it
+   * stranded in space with a gap between it and its arrow.
+   */
+  drop?: number;
   /** Which side of the target it sits on. Flips the whole thing horizontally. */
   side?: 'left' | 'right';
   /** Extra classes for placement against the parent. */
@@ -40,6 +48,7 @@ const {
   curve = 40,
   shape = 'curve',
   tilt = -6,
+  drop = 0,
   side = 'left',
   class: className = '',
 } = Astro.props;
@@ -62,19 +71,23 @@ const uid = `chalk-${Math.random().toString(36).slice(2, 8)}`;
    head is part of the same path, so the whole mark still draws as one line. */
 const SHAPES = {
   /* A ruled line. No bow at all. */
-  straight: `M 22 118 L 128 22 M 128 22 L 101 28 M 128 22 L 122 49`,
+  straight: `M 22 ${118 + drop} L 128 22 M 128 22 L 101 28 M 128 22 L 122 49`,
 
   /* The original gentle bow, still driven by `curve`. */
-  curve: `M 14 122 Q ${34 + curve} ${96 - curve} 130 20 M 130 20 L 104 27 M 130 20 L 124 46`,
+  curve: `M 14 ${122 + drop} Q ${34 + curve} ${96 - curve + drop * 0.55} 130 20 M 130 20 L 104 27 M 130 20 L 124 46`,
 
   /* Swings out to the left before hooking back up. */
-  hook: `M 46 126 C 2 106, 16 42, 124 18 M 124 18 L 97 21 M 124 18 L 119 45`,
+  hook: `M 46 ${126 + drop} C 2 ${104 + drop}, 16 ${44 + drop * 0.35}, 124 18 M 124 18 L 97 21 M 124 18 L 119 45`,
 
   /* A long shallow S, the loosest of the four. */
-  swoop: `M 8 116 C 72 128, 22 50, 126 20 M 126 20 L 99 25 M 126 20 L 120 47`,
+  swoop: `M 8 ${116 + drop} C 72 ${126 + drop}, 22 ${52 + drop * 0.4}, 126 20 M 126 20 L 99 25 M 126 20 L 120 47`,
 } as const;
 
 const d = SHAPES[shape];
+
+/* The box grows with the drop, so a longer tail is drawn at the same scale
+   rather than the whole arrow being squashed to fit a fixed box. */
+const vbHeight = 130 + drop;
 ---
 
 {/* A span, not a div, and that matters. This gets nested inside the hero's
@@ -89,7 +102,7 @@ const d = SHAPES[shape];
   data-target={target}
   style={`--tilt:${tilt}deg`}
 >
-  <svg class="chalk__svg" viewBox="0 0 200 130" fill="none" focusable="false">
+  <svg class="chalk__svg" viewBox={`0 0 200 ${vbHeight}`} fill="none" focusable="false">
     <defs>
       <filter id={uid} x="-20%" y="-20%" width="140%" height="140%">
         <feTurbulence

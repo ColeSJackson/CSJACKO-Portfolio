@@ -67,6 +67,7 @@ const DISCIPLINES = [
     shape: 'curve',
     curve: 34,
     tilt: -6,
+    drop: 0,
   },
   {
     word: 'EDIT',
@@ -75,6 +76,7 @@ const DISCIPLINES = [
     note: "Some cool videos I've made/edited",
     shape: 'swoop',
     tilt: -3,
+    drop: 95,
   },
   {
     word: 'DESIGN',
@@ -83,6 +85,7 @@ const DISCIPLINES = [
     note: 'emails, paid media and more sick designs :)',
     shape: 'straight',
     tilt: -9,
+    drop: 40,
   },
   {
     word: 'STRATEGY',
@@ -91,6 +94,7 @@ const DISCIPLINES = [
     note: "Social Media and Email Marketing strategy's inside! (They're really good)",
     shape: 'hook',
     tilt: -4,
+    drop: 155,
   },
 ];
 ---
@@ -129,6 +133,7 @@ const DISCIPLINES = [
                 shape={d.shape}
                 curve={d.curve}
                 tilt={d.tilt}
+                drop={d.drop}
                 side="left"
               />
             </a>
@@ -272,26 +277,9 @@ const DISCIPLINES = [
     margin-top: -0.5rem;
   }
 
-  /* The stagger goes on the handwriting, NOT on the annotation.
-
-     Offsetting the whole thing pushed the arrow down with it, so the staggered
-     ones stopped touching their button, which is the one thing the arrow has to
-     do. Moving it to the text keeps every tip on its chip and still separates
-     the wide part, which is the only part that was colliding.
-
-     Four steps rather than two, and uneven, so the row reads as something
-     written on by hand rather than a pattern. */
-  .hero__word:nth-child(2) :global(.chalk__text) {
-    margin-top: 2.4rem;
-  }
-
-  .hero__word:nth-child(3) :global(.chalk__text) {
-    margin-top: 0.9rem;
-  }
-
-  .hero__word:nth-child(4) :global(.chalk__text) {
-    margin-top: 3.2rem;
-  }
+  /* No offset on the handwriting. The cascade comes from each arrow's own
+     tail length instead, so the text always sits at the end of its line rather
+     than floating in space below it. */
 
   .hero__row {
     font-size: calc(clamp(0.85rem, 4.1vw, 3.4rem) * var(--fit-scale, 1));
@@ -422,27 +410,29 @@ const DISCIPLINES = [
       margin-top: clamp(8.5rem, 20vh, 11rem);
     }
 
-    /* A deeper cascade on a phone. The chips are narrow enough that the text
-       blocks overlap horizontally whatever their width, so they are separated
-       vertically instead: each sits below the last and none can meet. */
-    .hero__word:nth-child(2) :global(.chalk__text) {
-      margin-top: 2.8rem;
-    }
-
-    .hero__word:nth-child(3) :global(.chalk__text) {
-      margin-top: 5.6rem;
-    }
-
-    .hero__word:nth-child(4) :global(.chalk__text) {
-      margin-top: 8.4rem;
-    }
   }
 
   /* All four stay on a phone now that the cascade above separates them
      vertically. They need more room below to land in. */
   @media (max-width: 700px) {
     .hero__foot {
-      margin-top: clamp(13rem, 30vh, 17rem);
+      margin-top: clamp(10rem, 24vh, 14rem);
+    }
+
+    /* The drop is in viewBox units, so it scales with the annotation's width:
+       on a narrow screen the arrows shorten and the cascade tightens with them
+       until two of the text blocks meet. A small extra offset here restores the
+       separation without pulling the handwriting off the end of its line. */
+    .hero__word:nth-child(2) :global(.chalk__text) {
+      margin-top: 0.7rem;
+    }
+
+    .hero__word:nth-child(3) :global(.chalk__text) {
+      margin-top: 1.5rem;
+    }
+
+    .hero__word:nth-child(4) :global(.chalk__text) {
+      margin-top: 2.3rem;
     }
   }
 
