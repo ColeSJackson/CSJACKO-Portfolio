@@ -1,7 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" fill="#d4522c"/>
-  <rect x="10" y="14" width="44" height="10" fill="#16130f"/>
-  <rect x="8" y="12" width="44" height="10" fill="#f2ebdd"/>
-  <rect x="10" y="40" width="44" height="10" fill="#16130f"/>
-  <rect x="8" y="38" width="44" height="10" fill="#f2ebdd"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CSJACKO">
+  <!--
+    Black square, red wordmark.
+
+    Set on two lines rather than one. A favicon renders at 16 to 32px in a tab,
+    and CSJACKO across a single 64px line solves to roughly 7px a letter, which
+    is a red smudge at that size. Split, each line gets more than twice the
+    height and the mark stays readable where it is actually seen.
+
+    Heavy system sans rather than Groovy Madness: an SVG favicon cannot reach
+    the site's webfont, so naming it would only fall through to whatever the OS
+    picks anyway. A stated bold stack is at least predictable.
+  -->
+  <rect width="64" height="64" fill="#000000"/>
+  <g
+    fill="#e62317"
+    font-family="'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-weight="900"
+    text-anchor="middle"
+  >
+    <text x="32" y="30" font-size="27" letter-spacing="-1">CS</text>
+    <text x="32" y="53" font-size="14.5" letter-spacing="-0.5">JACKO</text>
+  </g>
 </svg>
