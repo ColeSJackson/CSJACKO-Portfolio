@@ -208,11 +208,16 @@ const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132
     }
   }
 
-  /* Under about 380px the row is tight enough that the annotation starts
-     crowding the card below it. */
-  @media (max-width: 380px) {
+  /* No lower cut-off. It used to hide under 380px, which took it off the
+     narrower phones entirely; the hero foot already carries the clearance it
+     needs, so it just gets smaller instead. */
+  @media (max-width: 420px) {
     .chalk {
-      display: none;
+      width: 5.4rem;
+    }
+
+    .chalk__text {
+      font-size: 0.8rem;
     }
   }
 </style>

@@ -318,7 +318,10 @@
 
   .field__blob--c,
   .field__blob--d,
-  .field__blob--e {
+  .field__blob--e,
+  .field__blob--f,
+  .field__blob--g,
+  .field__blob--h {
     background: radial-gradient(
       circle at 50% 50%,
       color-mix(in srgb, var(--color-bone) 11%, transparent) 0%,
@@ -375,6 +378,39 @@
     animation:
       drift-e 53s ease-in-out infinite alternate,
       breathe-strong 43s ease-in-out infinite alternate;
+  }
+
+  /* Three more whites, scattered so the leaks read as several sources rather
+     than one moving light. More white is what gives the black something to be
+     contrasted against; adding red instead would only tint the glow. */
+  .field__blob--f {
+    top: 42%;
+    left: -14vmax;
+    width: 40vmax;
+    height: 40vmax;
+    animation:
+      drift-d 61s ease-in-out infinite alternate,
+      breathe-strong 47s ease-in-out infinite alternate;
+  }
+
+  .field__blob--g {
+    bottom: 6%;
+    right: 14%;
+    width: 36vmax;
+    height: 36vmax;
+    animation:
+      drift-e 79s ease-in-out infinite alternate,
+      breathe-soft 33s ease-in-out infinite alternate;
+  }
+
+  .field__blob--h {
+    top: -12vmax;
+    left: 30%;
+    width: 42vmax;
+    height: 42vmax;
+    animation:
+      drift-a 83s ease-in-out infinite alternate,
+      breathe-soft 39s ease-in-out infinite alternate;
   }
 
   @keyframes breathe-strong {
