@@ -22,8 +22,12 @@ interface Props {
   /** For the comment in the markup. The component does not query the DOM. */
   target?: string;
   text: string;
-  /** How much the arrow bows. Positive bows one way, negative the other. */
+  /** How much the arrow bows. Only used by the `curve` shape. */
   curve?: number;
+  /** Which arrow to draw. See SHAPES below. */
+  shape?: 'straight' | 'curve' | 'hook' | 'swoop';
+  /** Rotation of the handwriting, in degrees. Varied so no two match. */
+  tilt?: number;
   /** Which side of the target it sits on. Flips the whole thing horizontally. */
   side?: 'left' | 'right';
   /** Extra classes for placement against the parent. */
@@ -34,6 +38,8 @@ const {
   target = '',
   text,
   curve = 40,
+  shape = 'curve',
+  tilt = -6,
   side = 'left',
   class: className = '',
 } = Astro.props;
@@ -41,15 +47,34 @@ const {
 /* One id per instance, so two annotations on a page cannot share a filter. */
 const uid = `chalk-${Math.random().toString(36).slice(2, 8)}`;
 
-/* Drawn in a 200x130 box, reading bottom-left to top-right so the arrow
-   approaches the target from below and points up into it rather than crossing
-   over it. `curve` pushes the control point, which controls how much it bows.
+/* Four genuinely different arrows, not one arrow with a dial on it.
 
-   The head is two short strokes off the tip, part of the same path so the
-   whole mark draws as a single line. Their angles are tuned to the tangent at
-   the end of the curve rather than derived, because a derived head on a
-   quadratic reads mechanical at this size. */
-const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132 18 L 126 44`;
+   All are drawn in the same 200x130 box and all finish near the top right, so
+   whichever is used still approaches its target from below and points up into
+   it. What changes is the geometry between: a straight rule, a gentle bow, a
+   hook that swings out left before coming back, and a long lazy S. Varying a
+   single control point, which is what this did before, only ever produced the
+   same shape bent by different amounts, and four of those in a row read as
+   clones.
+
+   Each carries its own arrowhead because the tangent at the tip differs per
+   shape, and a head that ignores the direction of travel looks stuck on. The
+   head is part of the same path, so the whole mark still draws as one line. */
+const SHAPES = {
+  /* A ruled line. No bow at all. */
+  straight: `M 22 118 L 128 22 M 128 22 L 101 28 M 128 22 L 122 49`,
+
+  /* The original gentle bow, still driven by `curve`. */
+  curve: `M 14 122 Q ${34 + curve} ${96 - curve} 130 20 M 130 20 L 104 27 M 130 20 L 124 46`,
+
+  /* Swings out to the left before hooking back up. */
+  hook: `M 46 126 C 2 106, 16 42, 124 18 M 124 18 L 97 21 M 124 18 L 119 45`,
+
+  /* A long shallow S, the loosest of the four. */
+  swoop: `M 8 116 C 72 128, 22 50, 126 20 M 126 20 L 99 25 M 126 20 L 120 47`,
+} as const;
+
+const d = SHAPES[shape];
 ---
 
 {/* A span, not a div, and that matters. This gets nested inside the hero's
@@ -62,6 +87,7 @@ const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132
   aria-hidden="true"
   data-chalk
   data-target={target}
+  style={`--tilt:${tilt}deg`}
 >
   <svg class="chalk__svg" viewBox="0 0 200 130" fill="none" focusable="false">
     <defs>
@@ -114,7 +140,7 @@ const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132
   }
 
   .chalk--right .chalk__text {
-    transform: scaleX(-1) rotate(-6deg);
+    transform: scaleX(-1) rotate(var(--tilt, -6deg));
     align-self: flex-end;
   }
 
@@ -158,7 +184,7 @@ const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132
     line-height: 1.05;
     color: #f2efe6;
     opacity: 0.85;
-    transform: rotate(-6deg);
+    transform: rotate(var(--tilt, -6deg));
     transform-origin: left center;
     padding-inline-start: 0.4rem;
   }
@@ -172,8 +198,8 @@ const d = `M 14 122 Q ${34 + curve} ${96 - curve} 132 18 M 132 18 L 106 26 M 132
   @media (prefers-reduced-motion: no-preference) {
     .chalk__line,
     .chalk__dust {
-      stroke-dasharray: 420;
-      stroke-dashoffset: 420;
+      stroke-dasharray: 640;
+      stroke-dashoffset: 640;
       animation: chalk-draw 900ms var(--ease-settle) 1150ms forwards;
     }
 

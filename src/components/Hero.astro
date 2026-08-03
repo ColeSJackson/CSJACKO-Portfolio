@@ -54,36 +54,43 @@ const bio = {
   fallback: await getImage({ src: colePortrait, format: 'jpeg', width: 700, quality: 82 }),
 };
 
-/* Each carries its own annotation. `curve` bows the arrow: they are varied so
-   four chalk marks in a row do not read as one shape stamped four times. */
+/* Each carries its own annotation, and each gets a different arrow: a ruled
+   line, a gentle bow, a hook and a long S. Four marks in a row have to be
+   genuinely different shapes, not one shape at four bend settings. The tilt on
+   the handwriting varies too, for the same reason. */
 const DISCIPLINES = [
   {
     word: 'SHOOT',
     href: '/shoot',
     label: 'Photography',
     note: 'My best photos everrr',
+    shape: 'curve',
     curve: 34,
+    tilt: -6,
   },
   {
     word: 'EDIT',
     href: '/edit',
     label: 'Video and reels',
     note: "Some cool videos I've made/edited",
-    curve: 62,
+    shape: 'swoop',
+    tilt: -3,
   },
   {
     word: 'DESIGN',
     href: '/design',
     label: 'Paid social, email and print design',
     note: 'emails, paid media and more sick designs :)',
-    curve: 20,
+    shape: 'straight',
+    tilt: -9,
   },
   {
     word: 'STRATEGY',
     href: '/strategy',
     label: 'Planning and content strategy',
     note: "Social Media and Email Marketing strategy's inside! (They're really good)",
-    curve: 46,
+    shape: 'hook',
+    tilt: -4,
   },
 ];
 ---
@@ -119,7 +126,9 @@ const DISCIPLINES = [
               <ChalkAnnotation
                 target={`${d.word} button`}
                 text={d.note}
+                shape={d.shape}
                 curve={d.curve}
+                tilt={d.tilt}
                 side="left"
               />
             </a>
