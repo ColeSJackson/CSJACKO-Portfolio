@@ -272,12 +272,25 @@ const DISCIPLINES = [
     margin-top: -0.5rem;
   }
 
-  /* Every other one drops lower. Four annotations hanging at the same height
-     under four adjacent chips collide no matter how narrow they are; staggered,
-     each has the neighbouring gap to itself, and the scatter reads more like
-     something written on by hand than a row of identical callouts. */
-  .hero__word:nth-child(even) :global(.chalk) {
-    margin-top: 2.6rem;
+  /* The stagger goes on the handwriting, NOT on the annotation.
+
+     Offsetting the whole thing pushed the arrow down with it, so the staggered
+     ones stopped touching their button, which is the one thing the arrow has to
+     do. Moving it to the text keeps every tip on its chip and still separates
+     the wide part, which is the only part that was colliding.
+
+     Four steps rather than two, and uneven, so the row reads as something
+     written on by hand rather than a pattern. */
+  .hero__word:nth-child(2) :global(.chalk__text) {
+    margin-top: 2.4rem;
+  }
+
+  .hero__word:nth-child(3) :global(.chalk__text) {
+    margin-top: 0.9rem;
+  }
+
+  .hero__word:nth-child(4) :global(.chalk__text) {
+    margin-top: 3.2rem;
   }
 
   .hero__row {
@@ -409,22 +422,27 @@ const DISCIPLINES = [
       margin-top: clamp(8.5rem, 20vh, 11rem);
     }
 
-    .hero__word:nth-child(even) :global(.chalk) {
-      margin-top: 1.8rem;
+    /* A deeper cascade on a phone. The chips are narrow enough that the text
+       blocks overlap horizontally whatever their width, so they are separated
+       vertically instead: each sits below the last and none can meet. */
+    .hero__word:nth-child(2) :global(.chalk__text) {
+      margin-top: 2.8rem;
+    }
+
+    .hero__word:nth-child(3) :global(.chalk__text) {
+      margin-top: 5.6rem;
+    }
+
+    .hero__word:nth-child(4) :global(.chalk__text) {
+      margin-top: 8.4rem;
     }
   }
 
-  /* Only the first annotation survives on a phone.
-
-     Not a preference: at 390px the chips are about 70px wide and the
-     annotation cannot go below roughly 96px without the handwriting breaking
-     to one word a line. Four of them therefore overlap each other no matter
-     how they are staggered, measured and confirmed. One that reads beats four
-     that collide, and the Shoot button is the one worth pointing at. All four
-     return at 700px, where there is room. */
+  /* All four stay on a phone now that the cascade above separates them
+     vertically. They need more room below to land in. */
   @media (max-width: 700px) {
-    .hero__word:not(:first-child) :global(.chalk) {
-      display: none;
+    .hero__foot {
+      margin-top: clamp(13rem, 30vh, 17rem);
     }
   }
 
