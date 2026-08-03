@@ -55,9 +55,13 @@ const bio = {
 };
 
 /* Each carries its own annotation, and each gets a different arrow: a ruled
-   line, a gentle bow, a hook and a long S. Four marks in a row have to be
-   genuinely different shapes, not one shape at four bend settings. The tilt on
-   the handwriting varies too, for the same reason. */
+   line, a gentle bow, a hook and a long S.
+
+   All four are the SAME length. Shoot's proportion, a short arrow with the
+   words right under it, is the one that reads properly, and stretching the
+   others to stagger them only pushed their handwriting away from the line it
+   belongs to. Variety comes from shape and from where each sits under its
+   chip, never from length. */
 const DISCIPLINES = [
   {
     word: 'SHOOT',
@@ -76,7 +80,7 @@ const DISCIPLINES = [
     note: "Some cool videos I've made/edited",
     shape: 'swoop',
     tilt: -3,
-    drop: 95,
+    drop: 0,
   },
   {
     word: 'DESIGN',
@@ -85,7 +89,7 @@ const DISCIPLINES = [
     note: 'emails, paid media and more sick designs :)',
     shape: 'straight',
     tilt: -9,
-    drop: 40,
+    drop: 0,
   },
   {
     word: 'STRATEGY',
@@ -94,7 +98,7 @@ const DISCIPLINES = [
     note: "Social Media and Email Marketing strategy's inside! (They're really good)",
     shape: 'hook',
     tilt: -4,
-    drop: 155,
+    drop: 0,
   },
 ];
 ---
@@ -277,9 +281,21 @@ const DISCIPLINES = [
     margin-top: -0.5rem;
   }
 
-  /* No offset on the handwriting. The cascade comes from each arrow's own
-     tail length instead, so the text always sits at the end of its line rather
-     than floating in space below it. */
+  /* Variety by position, not by length. Each annotation sits at a different
+     point under its own chip, which breaks the row up without stretching any
+     arrow away from its words. */
+  .hero__word:nth-child(2) :global(.chalk) {
+    left: 22%;
+  }
+
+  .hero__word:nth-child(3) :global(.chalk) {
+    left: 8%;
+  }
+
+  .hero__word:nth-child(4) :global(.chalk) {
+    left: 28%;
+  }
+
 
   .hero__row {
     font-size: calc(clamp(0.85rem, 4.1vw, 3.4rem) * var(--fit-scale, 1));
@@ -343,7 +359,7 @@ const DISCIPLINES = [
        Four chalk notes hang below the row and the staggered ones reach roughly
        170px past it, so anything less and the handwriting lands on top of the
        card. */
-    margin-top: clamp(7rem, 16vh, 13.5rem);
+    margin-top: clamp(5rem, 11vh, 8rem);
   }
 
   .bio {
@@ -416,23 +432,37 @@ const DISCIPLINES = [
      vertically. They need more room below to land in. */
   @media (max-width: 700px) {
     .hero__foot {
-      margin-top: clamp(10rem, 24vh, 14rem);
+      margin-top: clamp(9.5rem, 22vh, 13rem);
     }
 
     /* The drop is in viewBox units, so it scales with the annotation's width:
        on a narrow screen the arrows shorten and the cascade tightens with them
        until two of the text blocks meet. A small extra offset here restores the
        separation without pulling the handwriting off the end of its line. */
+    /* The horizontal offsets are what break the row up on a wide screen, but
+       on a phone the chips are narrow enough that shifting a note sideways
+       pushes it straight into its neighbour. Each goes back under its own chip
+       and the vertical cascade does the separating instead. */
+    .hero__word:nth-child(2) :global(.chalk),
+    .hero__word:nth-child(3) :global(.chalk),
+    .hero__word:nth-child(4) :global(.chalk) {
+      left: 0;
+    }
+
+    /* Each step has to clear the whole of the block above it, not just its
+       first line. These notes run to three and five lines on a phone, so a step
+       shorter than a block's height leaves the bottom of one sitting on the top
+       of the next. */
     .hero__word:nth-child(2) :global(.chalk__text) {
-      margin-top: 0.7rem;
+      margin-top: 2.3rem;
     }
 
     .hero__word:nth-child(3) :global(.chalk__text) {
-      margin-top: 1.5rem;
+      margin-top: 4.8rem;
     }
 
     .hero__word:nth-child(4) :global(.chalk__text) {
-      margin-top: 2.3rem;
+      margin-top: 7.2rem;
     }
   }
 
