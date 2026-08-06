@@ -14,9 +14,8 @@
  * by 5000-odd pixels, so the columns are long, but that is the point: the work
  * is the whole email, and scrolling one is how you read it.
  *
- * Every category runs three columns on a desktop and two on a phone. Two hold
- * on a phone even for the emails, because a half-width email is still legible
- * where a half-width photograph would not be.
+ * Column counts are per category and follow the shape of the work. See COLUMNS
+ * below.
  */
 
 import { Picture, getImage } from 'astro:assets';
@@ -38,6 +37,18 @@ const INTRO: Record<SubsectionKey, string> = {
     'Campaign and lifecycle email design, from one-off sends to flows that keep running.',
   print: 'Stand graphics, printed collateral and the physical side of a launch.',
   brand: 'Identity work: brand boards, redesigns and the marks that hold a brand together.',
+};
+
+/* Column counts follow the shape of the work, not one rule for the whole
+   section. Paid social is 9:16 and emails are taller still, so two of either
+   still read on a phone. Brand pieces are 16:9 boards: at half a phone's width
+   a whole identity system is a postage stamp, so they take the full width and
+   you scroll them instead. */
+const COLUMNS: Record<SubsectionKey, { desktop: number; phone: number }> = {
+  'paid-social': { desktop: 3, phone: 2 },
+  email: { desktop: 3, phone: 2 },
+  print: { desktop: 3, phone: 2 },
+  brand: { desktop: 2, phone: 1 },
 };
 
 /** Which presentation each category uses. See the note at the top. */
@@ -140,8 +151,8 @@ const title = SUBSECTION_TITLE[category];
         <div
           class="dg__wall"
           data-masonry
-          data-cols="3"
-          data-cols-min="2"
+          data-cols={COLUMNS[category].desktop}
+          data-cols-min={COLUMNS[category].phone}
         >
           {items.map((item, i) => (
             <div
