@@ -15,7 +15,7 @@ export const CONTEXTS = ['motohaus', 'csjacko', 'freelance'] as const;
 export const SECTIONS = ['shoot', 'edit', 'design', 'strategy'] as const;
 
 /** Groups within a section. Only design uses these today. */
-export const SUBSECTIONS = ['paid-social', 'email', 'print'] as const;
+export const SUBSECTIONS = ['paid-social', 'email', 'print', 'brand'] as const;
 
 export type SubsectionKey = (typeof SUBSECTIONS)[number];
 
@@ -61,6 +61,7 @@ export const SUBSECTION_LABEL: Record<(typeof SUBSECTIONS)[number], string> = {
   'paid-social': 'Paid social',
   email: 'Email',
   print: 'Print and event',
+  brand: 'Brand',
 };
 
 /** Full titles for the three design category pages and their landing cards. */
@@ -68,10 +69,11 @@ export const SUBSECTION_TITLE: Record<(typeof SUBSECTIONS)[number], string> = {
   'paid-social': 'Paid social designs',
   email: 'Email campaign designs',
   print: 'Print and event designs',
+  brand: 'Brand design',
 };
 
 /** Fixed order so a section page never reshuffles its groups between builds. */
-export const SUBSECTION_ORDER = ['paid-social', 'email', 'print'] as const;
+export const SUBSECTION_ORDER = ['paid-social', 'email', 'print', 'brand'] as const;
 
 /** Human labels. Kept here so no component ever hardcodes a discipline name. */
 export const DISCIPLINE_LABEL: Record<(typeof DISCIPLINES)[number], string> = {

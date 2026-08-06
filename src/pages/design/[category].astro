@@ -37,6 +37,7 @@ const INTRO: Record<SubsectionKey, string> = {
   email:
     'Campaign and lifecycle email design, from one-off sends to flows that keep running.',
   print: 'Stand graphics, printed collateral and the physical side of a launch.',
+  brand: 'Identity work: brand boards, redesigns and the marks that hold a brand together.',
 };
 
 /** Which presentation each category uses. See the note at the top. */
@@ -44,12 +45,14 @@ const MODE: Record<SubsectionKey, 'wall'> = {
   'paid-social': 'wall',
   email: 'wall',
   print: 'wall',
+  brand: 'wall',
 };
 
 const EMPTY: Record<SubsectionKey, string> = {
   'paid-social': 'Nothing here yet. This is where the paid social work will live.',
   email: 'Nothing here yet. This is where the email campaign work will live.',
   print: 'Nothing here yet. This is where the printed and event work will live.',
+  brand: 'Nothing here yet. This is where the brand and identity work will live.',
 };
 
 export function getStaticPaths() {
@@ -71,6 +74,10 @@ const ALL = {
   ),
   print: import.meta.glob<{ default: ImageMetadata }>(
     '../../assets/design/print/*.{jpg,jpeg,png}',
+    { eager: true },
+  ),
+  brand: import.meta.glob<{ default: ImageMetadata }>(
+    '../../assets/design/brand/*.{jpg,jpeg,png}',
     { eager: true },
   ),
 };

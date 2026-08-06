@@ -24,6 +24,10 @@ import { SUBSECTION_ORDER, SUBSECTION_TITLE } from '../content.config';
 import paidSocialThumb from '../assets/design/paid-social/7-9x16-large.jpg';
 import emailThumb from '../assets/design/email/legend-gear.jpg';
 import printThumb from '../assets/design/print/nexx-event-stand.jpg';
+/* Brand's thumbnail is its own image rather than one of the pieces, and it
+   deliberately lives outside assets/design/brand so the category page's glob
+   does not also show it in the gallery. */
+import brandThumb from '../assets/design/brand-thumbnail.jpg';
 
 const THUMBS = {
   'paid-social': {
@@ -38,6 +42,10 @@ const THUMBS = {
     src: printThumb,
     alt: 'NEXX event stand at a show, printed product wall listing the X.WED3 and X.LIFECOUNTRY ranges.',
   },
+  brand: {
+    src: brandThumb,
+    alt: 'Illustrated character mark in pink and green on cream, drawn for a brand identity.',
+  },
 } as const;
 
 /* Counted from the asset folders, which is what the category pages actually
@@ -48,6 +56,7 @@ const COUNTS = {
   'paid-social': import.meta.glob('../assets/design/paid-social/*.{jpg,jpeg,png}'),
   email: import.meta.glob('../assets/design/email/*.{jpg,jpeg,png}'),
   print: import.meta.glob('../assets/design/print/*.{jpg,jpeg,png}'),
+  brand: import.meta.glob('../assets/design/brand/*.{jpg,jpeg,png}'),
 } satisfies Record<string, Record<string, unknown>>;
 
 const categories = SUBSECTION_ORDER.map((key) => ({
@@ -67,7 +76,7 @@ const categories = SUBSECTION_ORDER.map((key) => ({
     <header class="dz__head">
       <a href="/" class="pill">Back</a>
       <h1 class="dz__title bloom warp-sm">Design</h1>
-      <p class="dz__count label">3 categories</p>
+      <p class="dz__count label">{categories.length} categories</p>
     </header>
 
     <ul class="dz__grid">
@@ -139,12 +148,15 @@ const categories = SUBSECTION_ORDER.map((key) => ({
     margin: 0;
   }
 
+  /* Auto-fit rather than a fixed count, so adding a category is a config
+     change and not a CSS change too. The hardcoded three is exactly what went
+     stale when brand was added. */
   .dz__grid {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
     gap: clamp(1rem, 2.5vw, 2rem);
   }
 
@@ -203,12 +215,6 @@ const categories = SUBSECTION_ORDER.map((key) => ({
   .dz__meta {
     opacity: 0.55;
     margin: 0;
-  }
-
-  @media (max-width: 900px) {
-    .dz__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
   }
 
   @media (max-width: 560px) {
