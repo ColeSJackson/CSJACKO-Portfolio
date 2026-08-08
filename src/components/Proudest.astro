@@ -18,6 +18,8 @@
  */
 
 import type { CollectionEntry } from 'astro:content';
+import type { ImageMetadata } from 'astro';
+import { Picture } from 'astro:assets';
 import { CONTEXT_LABEL } from '../content.config';
 
 interface Props {
@@ -30,6 +32,22 @@ const { entries } = Astro.props;
    yet is itself information. It just needs saying plainly rather than leaving
    a reader wondering why the block is thin. */
 const isWithheld = (e: CollectionEntry<'work'>) => e.data.confidential;
+
+/* Same slug-keyed glob the case study pages use, so one file at
+   src/assets/work/<slug>-site.<ext> shows the work in the wild in both places
+   and neither can drift from the other. Globbed rather than declared in
+   frontmatter, so a piece without one is simply a block with no image. */
+const siteShots = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/work/*-site.{jpg,jpeg,png,webp}',
+  { eager: true },
+);
+
+function shotFor(id: string): ImageMetadata | undefined {
+  const hit = Object.entries(siteShots).find(([path]) =>
+    path.split('/').pop()!.startsWith(`${id}-site.`),
+  );
+  return hit?.[1].default;
+}
 ---
 
 <section class="proud room" id="featured" aria-labelledby="proud-heading">
@@ -42,9 +60,11 @@ const isWithheld = (e: CollectionEntry<'work'>) => e.data.confidential;
       entries.map((entry) => {
         const d = entry.data;
         const withheld = isWithheld(entry);
+        const shot = shotFor(entry.id);
 
         return (
-          <li class="pw" data-reveal>
+          <li class:list={['pw', shot && 'pw--split']} data-reveal>
+            <div class="pw__copy">
             <div class="pw__meta">
               <span class="pw__client label">{d.client}</span>
               <span class="pw__dot label" aria-hidden="true">
@@ -109,6 +129,23 @@ const isWithheld = (e: CollectionEntry<'work'>) => e.data.confidential;
                 ))}
               </dl>
             )}
+            </div>
+
+            {shot && (
+              <figure class="pw__shot">
+                <Picture
+                  src={shot}
+                  alt={`The ${d.client} site showing the work live.`}
+                  formats={['avif', 'webp']}
+                  fallbackFormat="jpg"
+                  widths={[560, 900, 1400]}
+                  sizes="(min-width: 900px) 44vw, 92vw"
+                  loading="lazy"
+                  decoding="async"
+                  class="pw__shot-img"
+                />
+              </figure>
+            )}
           </li>
         );
       })
@@ -155,6 +192,39 @@ const isWithheld = (e: CollectionEntry<'work'>) => e.data.confidential;
     list-style: none;
     margin: 0;
     padding: 0;
+  }
+
+  /* Two columns once a piece has a screenshot to show, copy left and the work
+     in the wild right. Without one it stays a single column exactly as before,
+     so a piece with no image loses nothing. */
+  .pw--split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
+    align-items: center;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .pw__shot {
+    margin: 0;
+    border-radius: clamp(0.75rem, 1.6vw, 1.25rem);
+    overflow: hidden;
+    /* The screenshot is a light site sitting in a black room, so it needs an
+       edge or it floats. */
+    border: 1px solid color-mix(in srgb, var(--color-bone) 16%, transparent);
+    background-color: var(--color-corner-lift);
+  }
+
+  .pw__shot-img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 900px) {
+    .pw--split {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.25rem;
+    }
   }
 
   .pw {
