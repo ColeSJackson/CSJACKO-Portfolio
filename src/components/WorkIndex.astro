@@ -8,7 +8,12 @@
  */
 
 import type { CollectionEntry } from 'astro:content';
-import { DISCIPLINE_LABEL, CONTEXT_SHORT, CONTEXT_LABEL } from '../content.config';
+import {
+  CONTEXTS,
+  CONTEXT_LABEL,
+  CONTEXT_SHORT,
+  DISCIPLINE_LABEL,
+} from '../content.config';
 
 interface Props {
   entries: CollectionEntry<'work'>[];
@@ -19,6 +24,13 @@ const { entries } = Astro.props;
 const sorted = [...entries].sort(
   (a, b) => b.data.year - a.data.year || a.data.client.localeCompare(b.data.client),
 );
+
+/* Derived from what is actually in the index rather than written out, which is
+   how the old legend came to advertise CS for an entry the table was rendering
+   as FR. Same source, same letters, always. */
+const legend = CONTEXTS.filter((c) =>
+  sorted.some((e) => e.data.context === c),
+).map((c) => ({ short: CONTEXT_SHORT[c], label: CONTEXT_LABEL[c] }));
 ---
 
 <section class="index room" id="index" aria-labelledby="index-heading">
@@ -26,6 +38,19 @@ const sorted = [...entries].sort(
     <h2 id="index-heading" class="label">Index</h2>
     <p class="label index__count">{sorted.length} entries</p>
   </header>
+
+  {/* Above the table, not under it. The right-hand column is two letters, and
+      a key printed after the thing it explains is a key nobody reads. */}
+  <dl class="index__key">
+    {
+      legend.map((l) => (
+        <div class="index__key-item">
+          <dt class="label index__key-short">{l.short}</dt>
+          <dd class="label index__key-label">{l.label}</dd>
+        </div>
+      ))
+    }
+  </dl>
 
   <ol class="index__list">
     {
@@ -38,7 +63,7 @@ const sorted = [...entries].sort(
               <span class="ix__client">{d.client}</span>
               <span class="ix__summary">{d.summary}</span>
               <span class="ix__discipline label">
-                {DISCIPLINE_LABEL[d.discipline]}
+                {d.discipline.map((x) => DISCIPLINE_LABEL[x]).join(', ')}
               </span>
               <span class="ix__context label" title={CONTEXT_LABEL[d.context]}>
                 {CONTEXT_SHORT[d.context]}
@@ -50,9 +75,6 @@ const sorted = [...entries].sort(
     }
   </ol>
 
-  <p class="index__key label">
-    MH Motohaus &nbsp;·&nbsp; CS CSJACKO
-  </p>
 </section>
 
 <style>
@@ -137,8 +159,26 @@ const sorted = [...entries].sort(
   }
 
   .index__key {
-    margin: 1.25rem 0 0;
-    opacity: 0.55;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    margin: 0 0 0.75rem;
+    opacity: 0.6;
+  }
+
+  .index__key-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  .index__key-short {
+    margin: 0;
+    color: var(--color-flare);
+  }
+
+  .index__key-label {
+    margin: 0;
   }
 
   @media (max-width: 860px) {

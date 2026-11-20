@@ -24,6 +24,9 @@ import Base from '../../layouts/Base.astro';
 import Masonry from '../../components/Masonry.astro';
 import Lightbox from '../../components/Lightbox.astro';
 import ContactFooter from '../../components/ContactFooter.astro';
+import BrandFilter from '../../components/BrandFilter.astro';
+import { brandForAsset, titleForAsset } from '../../data/design';
+import { brandsPresent } from '../../data/brands';
 import {
   SUBSECTIONS,
   SUBSECTION_TITLE,
@@ -95,25 +98,26 @@ const ALL = {
 
 /* Filenames carry the campaign. Turning that into a label gives every asset
    usable alt text and a lightbox caption without per-file frontmatter. */
-function labelFor(path: string): string {
-  return path
-    .split('/')
-    .pop()!
-    .replace(/\.[^.]+$/, '')
-    .split('-')
-    .filter(Boolean)
-    .map((w) => (/^\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
-    .join(' ');
-}
+/* Filenames still carry the piece, so adding work stays a file drop. The stem
+   is resolved through src/data/design.ts, which supplies the client the piece
+   was for and a properly written title where the filename would produce a
+   mangled one. An unlisted stem still renders: it falls back to the filename
+   and to Motohaus. */
+const stemOf = (path: string) =>
+  path.split('/').pop()!.replace(/\.[^.]+$/, '');
 
 const mode = MODE[category];
 
 const assets = Object.entries(ALL[category])
   .sort(([a], [b]) => a.localeCompare(b, 'en', { numeric: true }))
-  .map(([path, mod]) => ({
-    src: mod.default,
-    label: labelFor(path),
-  }));
+  .map(([path, mod]) => {
+    const stem = stemOf(path);
+    return {
+      src: mod.default,
+      label: titleForAsset(stem),
+      brand: brandForAsset(stem),
+    };
+  });
 
 /* One larger variant per asset for the viewer, so the grid never has to load a
    full-size file and the lightbox costs a single request. */
@@ -125,6 +129,13 @@ const fulls = await Promise.all(
 
 const items = assets.map((a, i) => ({ ...a, full: fulls[i] }));
 const title = SUBSECTION_TITLE[category];
+
+/* Chips only where a category actually holds more than one client's work.
+   BrandFilter renders nothing for a single brand, so this needs no guard. */
+const filterBrands = brandsPresent(items);
+const counts = Object.fromEntries(
+  filterBrands.map((b) => [b, items.filter((i) => i.brand === b).length]),
+);
 ---
 
 <Base
@@ -136,7 +147,7 @@ const title = SUBSECTION_TITLE[category];
     <header class="dg__head">
       <a href="/design" class="pill">Design</a>
       <h1 class="dg__title bloom warp-sm">{title}</h1>
-      <p class="dg__count label">
+      <p class="dg__count label" data-filter-count>
         {items.length}
         {items.length === 1 ? 'piece' : 'pieces'}
       </p>
@@ -144,7 +155,18 @@ const title = SUBSECTION_TITLE[category];
 
     <p class="dg__intro text-pretty">{INTRO[category]}</p>
 
+    <BrandFilter
+      brands={filterBrands}
+      counts={counts}
+      total={items.length}
+      noun="piece"
+    />
+
     {items.length === 0 && <p class="dg__empty text-pretty">{EMPTY[category]}</p>}
+
+    <p class="dg__empty label" data-filter-none hidden>
+      Nothing under that filter yet.
+    </p>
 
     {
       mode === 'wall' && items.length > 0 && (
@@ -158,6 +180,8 @@ const title = SUBSECTION_TITLE[category];
             <div
               class="dg__cell"
               data-mas-item
+              data-filter-item
+              data-brand={item.brand}
               data-ar={item.src.height / item.src.width}
             >
               <button
