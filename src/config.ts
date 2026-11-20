@@ -22,8 +22,20 @@ export const SITE = {
   cv: '/cv.pdf',
 
   location:
-    'Farnborough, Hampshire. Commutable to London, happy to work remote.',
+    'Farnborough, Hampshire. Happy to work remote, or anywhere within about 45 minutes.',
 
   lookingFor:
-    'A full-time content, social or brand role on a marketing team. Marketing Executive and similar titles would suit me best :)',
+    'A content, social or video role on a marketing team, full-time or part-time. Content Executive, Social Media Executive, Videographer/Editor and similar titles suit me best :)',
+} as const;
+
+/**
+ * Splash Comics, the side business. Its own constant rather than more fields on
+ * SITE: these are a different brand's details, and the /splash page, the
+ * homepage band and the strategy page all need the same handle and shop URL.
+ */
+export const SPLASH = {
+  shop: 'https://splashcomics.co.uk',
+  handle: '@splash_comics_',
+  tiktok: 'https://www.tiktok.com/@splash_comics_',
+  instagram: 'https://www.instagram.com/splash_comics_',
 } as const;

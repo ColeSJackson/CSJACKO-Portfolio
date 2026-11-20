@@ -62,7 +62,20 @@ const bio = {
    others to stagger them only pushed their handwriting away from the line it
    belongs to. Variety comes from shape and from where each sits under its
    chip, never from length. */
-const DISCIPLINES = [
+type Discipline = {
+  word: string;
+  href: string;
+  label: string;
+  note: string;
+  shape: 'straight' | 'curve' | 'hook' | 'swoop';
+  /* Only the `curve` shape reads it, so it is optional and the other three
+     simply leave it out rather than carrying a value nothing consumes. */
+  curve?: number;
+  tilt: number;
+  drop: number;
+};
+
+const DISCIPLINES: Discipline[] = [
   {
     word: 'SHOOT',
     href: '/shoot',
@@ -129,7 +142,11 @@ const DISCIPLINES = [
                out of flow, so the row measures exactly as it did before. It is
                aria-hidden and pointer-events:none, so it adds nothing to the
                link's name and cannot intercept its clicks. */
-            <a class="hero__word" href={d.href} aria-label={d.label}>
+            /* The label leads with the visible word. An accessible name that
+               replaces it outright ("Photography" over a chip reading SHOOT)
+               fails label-in-name and, worse, means someone using voice
+               control cannot say what they can see. */
+            <a class="hero__word" href={d.href} aria-label={`${d.word}, ${d.label.toLowerCase()}`}>
               {d.word}
               <ChalkAnnotation
                 target={`${d.word} button`}
@@ -154,15 +171,16 @@ const DISCIPLINES = [
     <div class="bio">
       <div class="bio__copy">
         <p class="text-pretty">
-          Hey I&rsquo;m Cole! I&rsquo;m a super creative and bubbly Content and
-          Digital Marketing Executive. I currently work for Motohaus
-          Powersports, and their portfolio of 9 Motorcycle accessory brands.
-          Outside of my full time work, I run a freelance side hustle where I do
-          event/sport photography.
+          Hey, I&rsquo;m Cole, a super creative and bubbly content creator and
+          marketer from Farnborough. I spent two years running content and
+          digital marketing across nine brands at Motohaus Powersports, then
+          worked as Creative Content Executive at O&rsquo;Neills Sportswear. On
+          the side I run Splash Comics, my own comic shop, and shoot combat
+          sports under CSJACKO.
         </p>
         <p class="text-pretty">
-          I&rsquo;m happiest when I have creative freedom, Check out my portfolio
-          while you&rsquo;re here!
+          I&rsquo;m happiest when I&rsquo;ve got creative freedom, so have a good
+          look around :)
         </p>
         <p class="bio__sign">- Cole SJ</p>
       </div>
@@ -192,6 +210,7 @@ const DISCIPLINES = [
             width={bio.fallback.attributes?.width ?? 700}
             height={bio.fallback.attributes?.height ?? 875}
             loading="eager"
+            fetchpriority="high"
             decoding="async"
             class="bio__img"
           />

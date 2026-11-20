@@ -20,12 +20,16 @@ const entries = await getCollection('work', ({ data }) => !data.draft);
 
 <Base
   title="Work / Cole SJ"
-  description="Everything. Photography, video, paid social design, email and social management across nine powersports brands and combat sports as CSJACKO."
+  description="Everything. Photography, video, paid social design, email and social management for powersports brands, O'Neills Sportswear, Splash Comics and combat sports as CSJACKO."
 >
   <section class="wk">
     <nav class="wk__back">
       <a href="/" class="pill">Back</a>
     </nav>
+
+    {/* The visible heading in WorkIndex is an h2 introducing the table. The
+        page itself still needs a name in the outline. */}
+    <h1 class="sr-only">Work index</h1>
 
     <WorkIndex entries={entries} />
   </section>

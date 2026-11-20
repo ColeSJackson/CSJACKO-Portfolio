@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import Proudest from '../components/Proudest.astro';
+import SplashBand from '../components/SplashBand.astro';
 import ContactFooter from '../components/ContactFooter.astro';
 
 /* The proudest three. The full index lives at /work: someone should get the
@@ -15,10 +16,13 @@ const featured = (await getCollection('work', ({ data }) => !data.draft))
 
 <Base
   title="Cole SJ / Content and Digital Marketing"
-  description="Cole SJ. Content and digital marketing across nine powersports brands. Combat sports photography and video as CSJACKO."
+  description="Cole SJ, content creator and marketer. Photography, video, design and strategy for KEIS, O'Neills Sportswear and my own comic shop, Splash Comics."
   logo={false}
 >
   <Hero />
   <Proudest entries={featured} />
+  {/* Between the work and the contact block, deliberately: it is the last
+      thing read before the email address. */}
+  <SplashBand />
   <ContactFooter />
 </Base>

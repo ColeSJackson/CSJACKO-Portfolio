@@ -17,8 +17,11 @@ interface Props {
    * Sets the page ground.
    * `ink` leaves the drifting field visible behind the content.
    * `corner` and `bone` are solid rooms that cover it.
+   * `splash` is the Splash Comics room: cream, and because it is opaque it
+   * covers the field, which is what keeps the film grain off that page
+   * structurally rather than by an exception. See src/styles/splash.css.
    */
-  ground?: 'ink' | 'corner' | 'bone';
+  ground?: 'ink' | 'corner' | 'bone' | 'splash';
   /**
    * The centred CSJACKO mark linking home. On by default so a page added
    * later gets it without anyone remembering to ask; home opts out, because
@@ -29,7 +32,7 @@ interface Props {
 
 const {
   title,
-  description = 'Cole SJ. Content and digital marketing. Photography, video, design and planning for nine powersports brands, and combat sports work as CSJACKO.',
+  description = 'Cole SJ, content creator and marketer. Photography, video, design and strategy for powersports brands, O\u2019Neills Sportswear and Splash Comics.',
   ground = 'ink',
   logo = true,
 } = Astro.props;
@@ -40,6 +43,10 @@ const GROUND_CLASS = {
   ink: 'text-bone',
   corner: 'bg-corner text-bone',
   bone: 'bg-bone text-ink',
+  /* Declared in splash.css rather than as Tailwind tokens: the Splash palette
+     is scoped under .splash-world so it cannot leak into the CSJACKO site,
+     which means it is not available to a utility class here. */
+  splash: 'ground-splash',
 } as const;
 ---
 
