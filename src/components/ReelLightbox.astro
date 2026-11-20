@@ -189,25 +189,41 @@
   interface Reel {
     src: string;
     title: string;
+    poster?: string;
   }
 
   function init() {
-    const dialog = document.querySelector<HTMLDialogElement>(
+    const found = document.querySelector<HTMLDialogElement>(
       '[data-reel-lightbox]',
     );
     const triggers = Array.from(
       document.querySelectorAll<HTMLButtonElement>('[data-reel]'),
     );
-    if (!dialog || !triggers.length) return;
+    if (!found || !triggers.length) return;
+
+    /* Re-bound after the guard. TypeScript drops a narrowing when the value is
+       used inside a hoisted function declaration, because that function could
+       in principle run before the guard; closeViewer below is exactly that
+       case. Binding the narrowed value to its own const makes the non-null
+       type the declared type, so every closure gets it for free. */
+    const dialog: HTMLDialogElement = found;
 
     const video = dialog.querySelector<HTMLVideoElement>('[data-rl-video]')!;
     const caption = dialog.querySelector<HTMLElement>('[data-rl-caption]')!;
     const counter = dialog.querySelector<HTMLElement>('[data-rl-counter]')!;
 
-    const reels: Reel[] = triggers.map((t) => ({
-      src: t.dataset.src ?? '',
-      title: t.dataset.title ?? '',
-    }));
+    /* Rebuilt on every open rather than once at init, because the Edit page
+       filters its wall and the arrows must stay inside what is on screen.
+       Visibility is read straight off the DOM: offsetParent is null for a
+       display:none element, which is what the filter's `hidden` attribute
+       produces. That means the two components share no state at all, and a
+       page with no filter simply gets every trigger. */
+    let reels: Reel[] = [];
+
+    function playlist(): HTMLButtonElement[] {
+      const visible = triggers.filter((t) => t.offsetParent !== null);
+      return visible.length ? visible : triggers;
+    }
 
     let current = 0;
     let opener: HTMLElement | null = null;
@@ -226,7 +242,13 @@
 
       stop();
       video.src = reel.src;
-      video.poster = reel.src.replace(/\.mp4$/, '.jpg');
+      /* Carried on the trigger as a built asset URL. It used to be derived by
+         swapping .mp4 for .jpg on the video path, which pointed at a file that
+         has never existed: posters live in src/assets and come out of the image
+         pipeline under /_astro with a content hash. Every poster was silently
+         404ing and the viewer opened on a black frame. */
+      if (reel.poster) video.poster = reel.poster;
+      else video.removeAttribute('poster');
       caption.textContent = reel.title;
       counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(
         reels.length,
@@ -254,11 +276,17 @@
       opener = null;
     }
 
-    triggers.forEach((trigger, i) => {
+    triggers.forEach((trigger) => {
       trigger.addEventListener('click', () => {
+        const active = playlist();
+        reels = active.map((t) => ({
+          src: t.dataset.src ?? '',
+          title: t.dataset.title ?? '',
+          poster: t.dataset.poster,
+        }));
         opener = trigger;
         dialog.showModal();
-        show(i);
+        show(Math.max(0, active.indexOf(trigger)));
       });
     });
 
@@ -314,9 +342,11 @@
     });
 
     /* Escape dismisses a native dialog without any of the handlers above
-       running, so it needs its own. `cancel` fires first and the close then
-       proceeds normally. */
-    dialog.addEventListener('cancel', () => stop());
+       running, so it needs its own. It routes through closeViewer rather than
+       just stop(), because tearing down the video is only half of it: focus
+       has to go back to the tile that opened the viewer, or Escape leaves a
+       keyboard user at the top of the document with their place lost. */
+    dialog.addEventListener('cancel', () => closeViewer());
 
     dialog.addEventListener('close', () => stop());
   }

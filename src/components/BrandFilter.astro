@@ -1,0 +1,180 @@
+---
+/**
+ * Brand filter chips.
+ *
+ * Used by the video wall and the design walls, which both grew past one
+ * client and both needed the same control. Shared rather than written twice,
+ * because two copies of a filter drift into two behaviours.
+ *
+ * The contract with the page is four data attributes and nothing else:
+ *
+ *   [data-filter-item]  every filterable cell, carrying data-brand
+ *   [data-filter-count] the live count in the page header
+ *   [data-filter-none]  the empty-state line, hidden by default
+ *
+ * Hiding uses the `hidden` attribute rather than a class, deliberately: it is
+ * the state in the DOM, so the reel viewer can read which cells are on screen
+ * and keep its arrows inside the filter without the two components sharing
+ * any state at all.
+ */
+
+import { BRAND_NAME, type Brand } from '../data/brands';
+
+interface Props {
+  /** Brands present, in filter order. The All chip is added here. */
+  brands: Brand[];
+  /** Per-brand totals, so a chip can carry its own count. */
+  counts: Record<string, number>;
+  total: number;
+  /** "reel" or "piece". Pluralised by adding an s. */
+  noun: string;
+}
+
+const { brands, counts, total, noun } = Astro.props;
+
+const chips = [
+  { key: 'all', label: 'All', count: total },
+  ...brands.map((b) => ({ key: b as string, label: BRAND_NAME[b], count: counts[b] ?? 0 })),
+];
+---
+
+{/* One brand means nothing to filter, so the control does not render at all
+    rather than appearing as a row with a single pressed chip. */}
+{
+  brands.length > 1 && (
+    <div class="bf" role="group" aria-label={`Filter by brand`} data-brand-filter data-noun={noun}>
+      {chips.map((c) => (
+        <button
+          type="button"
+          class="bf__chip"
+          data-filter={c.key}
+          aria-pressed={c.key === 'all' ? 'true' : 'false'}
+        >
+          {c.label}
+          <span class="bf__count" aria-hidden="true">{c.count}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+<style>
+  /* The homepage buttons at a small size: red fill at rest, the same light
+     blue when active. Red for off and blue for on is the hero's language,
+     which is the point of reusing it rather than inventing a third
+     affordance. */
+  .bf {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
+  }
+
+  .bf__chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45em;
+    padding: 0.42em 0.8em 0.46em;
+    font-family: var(--font-utility);
+    font-size: var(--text-step--1);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--color-bone);
+    background-color: color-mix(in srgb, var(--color-flare) 88%, transparent);
+    border: 1px solid var(--color-flare);
+    border-radius: 999px;
+    cursor: pointer;
+    transition:
+      background-color 260ms var(--ease-settle),
+      border-color 260ms var(--ease-settle),
+      color 260ms var(--ease-settle);
+  }
+
+  .bf__chip:hover {
+    background-color: var(--color-flare);
+  }
+
+  .bf__chip[aria-pressed='true'] {
+    background-color: var(--color-sky);
+    border-color: var(--color-sky);
+    /* Bone on this blue is about 1.6:1. Ink is 11:1, so the label flips dark. */
+    color: var(--color-ink);
+  }
+
+  /* No opacity. At 0.7 the count blended to about 3.4:1 on the red chip,
+     which fails AA, and it is a number someone is meant to read rather than
+     decoration. Size alone is enough to make it secondary. */
+  .bf__count {
+    font-size: 0.85em;
+  }
+</style>
+
+<script>
+  /**
+   * The URL is updated with replaceState, not pushState. A filter is a view of
+   * one page, not a place: pushing would make Back step through filters
+   * instead of leaving the page, which traps people on the wall.
+   */
+  function initBrandFilter() {
+    const group = document.querySelector<HTMLElement>('[data-brand-filter]');
+    if (!group) return;
+
+    const chips = Array.from(
+      group.querySelectorAll<HTMLButtonElement>('[data-filter]'),
+    );
+    const items = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-filter-item]'),
+    );
+    const count = document.querySelector<HTMLElement>('[data-filter-count]');
+    const none = document.querySelector<HTMLElement>('[data-filter-none]');
+    const noun = group.dataset.noun ?? 'piece';
+
+    function apply(key: string, writeUrl: boolean) {
+      let shown = 0;
+      for (const item of items) {
+        const match = key === 'all' || item.dataset.brand === key;
+        item.hidden = !match;
+        if (match) shown++;
+      }
+
+      for (const chip of chips) {
+        chip.setAttribute(
+          'aria-pressed',
+          chip.dataset.filter === key ? 'true' : 'false',
+        );
+      }
+
+      if (count) {
+        count.textContent = `${shown} ${shown === 1 ? noun : noun + 's'}`;
+      }
+      if (none) none.hidden = shown > 0;
+
+      /* The design walls are packed into explicit columns by Masonry, and
+         hiding cells leaves those columns uneven. Masonry only rebuilds when
+         the column count changes, so it needs telling that the contents did. */
+      window.dispatchEvent(new Event('masonry:repack'));
+
+      if (writeUrl) {
+        const url = new URL(window.location.href);
+        if (key === 'all') url.searchParams.delete('brand');
+        else url.searchParams.set('brand', key);
+        window.history.replaceState({}, '', url);
+      }
+    }
+
+    for (const chip of chips) {
+      chip.addEventListener('click', () =>
+        apply(chip.dataset.filter ?? 'all', true),
+      );
+    }
+
+    /* An unknown ?brand= falls back to all rather than showing an empty wall
+       with no explanation. */
+    const wanted = new URL(window.location.href).searchParams.get('brand');
+    const valid = wanted && chips.some((c) => c.dataset.filter === wanted);
+    apply(valid ? wanted! : 'all', false);
+  }
+
+  initBrandFilter();
+  document.addEventListener('astro:page-load', initBrandFilter);
+</script>

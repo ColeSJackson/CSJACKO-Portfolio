@@ -133,6 +133,20 @@
       for (const grid of grids) build(grid);
     }
 
+    /* Forced rebuild, for when the ITEMS changed rather than the width.
+       build() short-circuits when the column count is unchanged, which is the
+       right call for a resize inside a breakpoint but wrong after a filter
+       hides half the wall: the columns keep their old distribution and come
+       out wildly uneven. Zeroing the cached count makes the next build real.
+       Items are re-collected too, so a filter that hides a cell still has it
+       placed in a column and ready to come back. */
+    window.addEventListener('masonry:repack', () => {
+      for (const grid of grids) {
+        grid.cols = 0;
+        build(grid);
+      }
+    });
+
     /* Two ways in, because the column count changing is the only thing that
        matters here and `resize` is not a reliable way to hear about it.
        matchMedia fires exactly on the breakpoints the layout cares about and
