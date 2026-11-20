@@ -14,6 +14,7 @@ import Figure from '../../components/Figure.astro';
 import StatStrip from '../../components/StatStrip.astro';
 import ContactFooter from '../../components/ContactFooter.astro';
 import { DISCIPLINE_LABEL, CONTEXT_LABEL } from '../../content.config';
+import { BRAND_NAME } from '../../data/brands';
 
 export const getStaticPaths = (async () => {
   const entries = await getCollection('work', ({ data }) => !data.draft);
@@ -52,10 +53,10 @@ const siteShot = shotEntry?.[1].default;
       {d.placeholder && <span class="pill cs__flag">Placeholder entry</span>}
     </nav>
 
-    <header class:list={['cs__head', 'cs__head--split']}>
+    <header class:list={['cs__head', siteShot && 'cs__head--split']}>
       <div class="cs__intro">
         <p class="cs__meta label">
-        <span>{DISCIPLINE_LABEL[d.discipline]}</span>
+        <span>{d.discipline.map((x) => DISCIPLINE_LABEL[x]).join(', ')}</span>
         <span>{d.client}</span>
         <span>{CONTEXT_LABEL[d.context]}</span>
         <span>{d.year}</span>
@@ -68,6 +69,14 @@ const siteShot = shotEntry?.[1].default;
       <p class="cs__statement text-balance">{d.summary}</p>
       {d.statement && <p class="cs__outcome text-pretty">{d.statement}</p>}
       {d.outcome && <p class="cs__outcome text-pretty">{d.outcome}</p>}
+
+      {d.reelBrand && (
+        <p class="cs__credit">
+          <a class="cs__link" href={`/edit?brand=${d.reelBrand}`}>
+            See all {BRAND_NAME[d.reelBrand]} videos
+          </a>
+        </p>
+      )}
 
       {d.externalUrl && (
         <p class="cs__credit">
@@ -94,12 +103,6 @@ const siteShot = shotEntry?.[1].default;
       )}
       </div>
 
-      {!siteShot && (
-        <div class="cs__site cs__site--empty" aria-hidden="true">
-          <span class="label">Image coming</span>
-        </div>
-      )}
-
       {siteShot && (
         <figure class="cs__site">
           <Picture
@@ -120,19 +123,24 @@ const siteShot = shotEntry?.[1].default;
 
     <StatStrip stats={d.stats} publicResults={d.publicResults} />
 
-    <div class="cs__cover">
-      <Picture
-        src={d.cover}
-        alt={d.coverAlt}
-        formats={['avif', 'webp']}
-        fallbackFormat="jpg"
-        widths={[600, 1000, 1600, 2000]}
-        sizes="100vw"
-        loading="eager"
-        fetchpriority="high"
-        class="cs__cover-img"
-      />
-    </div>
+    {/* No hero where none has been handed over. A borrowed frame from another
+        shoot presented as this campaign's would be worse than an absence, and
+        a dashed "image coming" box is a placeholder on a portfolio. */}
+    {d.cover && (
+      <div class="cs__cover">
+        <Picture
+          src={d.cover}
+          alt={d.coverAlt ?? d.title}
+          formats={['avif', 'webp']}
+          fallbackFormat="jpg"
+          widths={[600, 1000, 1600, 2000]}
+          sizes="100vw"
+          loading="eager"
+          fetchpriority="high"
+          class="cs__cover-img"
+        />
+      </div>
+    )}
 
     <div class="cs__blocks">
       {
@@ -244,17 +252,6 @@ const siteShot = shotEntry?.[1].default;
     /* The screenshot is of a light site sitting in a dark room, so it needs an
        edge or it floats. */
     border: 1px solid color-mix(in srgb, var(--color-ink) 18%, transparent);
-  }
-
-  /* Holds the slot's space before the screenshot exists, so the layout is
-     final now rather than shifting when one is dropped in. */
-  .cs__site--empty {
-    display: grid;
-    place-items: center;
-    aspect-ratio: 16 / 10;
-    border-style: dashed;
-    border-color: color-mix(in srgb, var(--color-ink) 28%, transparent);
-    opacity: 0.5;
   }
 
   .cs__site-img {

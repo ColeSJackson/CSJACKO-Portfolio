@@ -6,7 +6,7 @@ discipline: photography
 context: motohaus
 year: 2025
 featured: true
-round: 1
+round: 3
 publicResults: true
 externalUrl: https://keisapparel.com
 credit: >-
@@ -24,14 +24,6 @@ stats:
   - label: Prior experience
     value: None
 media:
-  - label: Product
-    assets:
-      - type: image
-        src: ../../assets/placeholder/square-01.jpg
-        alt: Placeholder. Replace with a finished KEIS product shot on the seamless.
-      - type: image
-        src: ../../assets/placeholder/square-02.jpg
-        alt: Placeholder. Replace with a second product frame from a different category.
   - label: Lifestyle
     assets:
       - type: image

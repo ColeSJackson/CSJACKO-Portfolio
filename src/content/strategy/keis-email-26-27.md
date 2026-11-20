@@ -22,6 +22,7 @@ groups:
         date: '1 September'
         subject: 'We''re Back! And We Need Your Help 🕵🏻‍♂️'
         preview: 'Hope you had a great summer, We''ve been very busy...'
+        href: '/work/winter-riders-wanted'
       - title: 'History Of KEIS'
         date: '6 September'
         subject: 'Where it all started! 📖'

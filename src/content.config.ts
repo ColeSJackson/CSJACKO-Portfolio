@@ -2,6 +2,7 @@ import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 export const DISCIPLINES = [
+  'campaign',
   'photography',
   'videography',
   'paid-social',
@@ -9,7 +10,13 @@ export const DISCIPLINES = [
   'social-management',
 ] as const;
 
-export const CONTEXTS = ['motohaus', 'csjacko', 'freelance'] as const;
+export const CONTEXTS = [
+  'motohaus',
+  'oneills',
+  'splash',
+  'csjacko',
+  'freelance',
+] as const;
 
 /** The four top-level sections, matching the words in the hero. */
 export const SECTIONS = ['shoot', 'edit', 'design', 'strategy'] as const;
@@ -20,11 +27,12 @@ export const SUBSECTIONS = ['paid-social', 'email', 'print', 'brand'] as const;
 export type SubsectionKey = (typeof SUBSECTIONS)[number];
 
 /** Brands with a planned programme. One button each on /strategy. */
-export const BRANDS = ['keis', 'sw-motech', 'nexx'] as const;
+export const BRANDS = ['splash', 'keis', 'sw-motech', 'nexx'] as const;
 
 export type BrandKey = (typeof BRANDS)[number];
 
 export const BRAND_LABEL: Record<BrandKey, string> = {
+  splash: 'Splash Comics',
   keis: 'KEIS',
   'sw-motech': 'SW-MOTECH',
   nexx: 'NEXX',
@@ -33,6 +41,7 @@ export const BRAND_LABEL: Record<BrandKey, string> = {
 /** The season each brand's plan covers. KEIS runs a winter season rather than
     a calendar year, which is why its plan straddles two of them. */
 export const BRAND_PERIOD: Record<BrandKey, string> = {
+  splash: 'Nov 2026 onwards',
   keis: '26/27 season',
   'sw-motech': '2026',
   nexx: '2026',
@@ -40,14 +49,24 @@ export const BRAND_PERIOD: Record<BrandKey, string> = {
 
 /** Channels a programme can run on. Fixed order so a brand page never
     reshuffles its strands between builds. */
-export const STRANDS = ['email', 'video', 'organic-social'] as const;
+export const STRANDS = [
+  'drops',
+  'paid-social',
+  'email',
+  'video',
+  'organic-social',
+  'creators',
+] as const;
 
 export type StrandKey = (typeof STRANDS)[number];
 
 export const STRAND_LABEL: Record<StrandKey, string> = {
+  drops: 'Drops',
+  'paid-social': 'Paid social',
   email: 'Email',
   video: 'Video',
   'organic-social': 'Organic social',
+  creators: 'Creators',
 };
 
 export const SECTION_LABEL: Record<(typeof SECTIONS)[number], string> = {
@@ -77,6 +96,7 @@ export const SUBSECTION_ORDER = ['paid-social', 'email', 'print', 'brand'] as co
 
 /** Human labels. Kept here so no component ever hardcodes a discipline name. */
 export const DISCIPLINE_LABEL: Record<(typeof DISCIPLINES)[number], string> = {
+  campaign: 'Campaign',
   photography: 'Photography',
   videography: 'Videography',
   'paid-social': 'Paid social',
@@ -86,6 +106,8 @@ export const DISCIPLINE_LABEL: Record<(typeof DISCIPLINES)[number], string> = {
 
 export const CONTEXT_LABEL: Record<(typeof CONTEXTS)[number], string> = {
   motohaus: 'Motohaus',
+  oneills: "O'Neills",
+  splash: 'Splash Comics',
   csjacko: 'CSJACKO',
   freelance: 'Freelance',
 };
@@ -93,6 +115,8 @@ export const CONTEXT_LABEL: Record<(typeof CONTEXTS)[number], string> = {
 /** Short form for the dense index column. */
 export const CONTEXT_SHORT: Record<(typeof CONTEXTS)[number], string> = {
   motohaus: 'MH',
+  oneills: 'ON',
+  splash: 'SC',
   csjacko: 'CS',
   freelance: 'FR',
 };
@@ -146,8 +170,14 @@ const work = defineCollection({
          print; the other sections do not group. */
       subsection: z.enum(SUBSECTIONS).optional(),
 
-      /* Kept as the human-readable label, independent of section. */
-      discipline: z.enum(DISCIPLINES),
+      /* An array, because a campaign is genuinely several crafts at once:
+         Winter Riders Wanted was planned, shot and cut, and picking one of
+         those to print would misdescribe it. A bare string is still accepted
+         and lifted into a single-item array, so the older entries did not all
+         need rewriting to add a field they do not use. */
+      discipline: z
+        .union([z.enum(DISCIPLINES), z.array(z.enum(DISCIPLINES)).min(1)])
+        .transform((d) => (Array.isArray(d) ? d : [d])),
       context: z.enum(CONTEXTS),
       year: z.number().int(),
 
@@ -165,8 +195,19 @@ const work = defineCollection({
       statement: z.string().optional(),
       outcome: z.string().optional(),
 
-      cover: image(),
-      coverAlt: z.string(),
+      /* Optional. A revealed campaign can be real and written up before its
+         imagery has been handed over, and the alternative to an absent hero is
+         a borrowed photograph from a different shoot presented as this one,
+         which is worse than no photograph. The page renders without it. */
+      cover: image().optional(),
+      coverAlt: z.string().optional(),
+
+      /* Points at a brand on the Edit wall, so a case study can link straight
+         to that brand's videos rather than at the top of all thirty-four.
+         Matches the keys in src/data/brands.ts. */
+      reelBrand: z
+        .enum(['splash', 'keis', 'oneills', 'csjacko', 'motohaus', 'freelance'])
+        .optional(),
 
       /* Some of the Motohaus work is the employer's. Results stay hidden unless
          this is explicitly flipped, and the stat strip renders a WITHHELD
@@ -269,6 +310,11 @@ const strategy = defineCollection({
                    rather than every entry needing a rewrite first. */
                 subject: z.string().optional(),
                 preview: z.string().optional(),
+
+                /* A path to the case study this send belongs to, when the work
+                   behind it has one. Only the launch email has this today, and
+                   a card without it is plain text rather than a dead link. */
+                href: z.string().optional(),
               }),
             )
             .default([]),

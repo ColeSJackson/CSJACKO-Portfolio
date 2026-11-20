@@ -106,8 +106,19 @@ const dated = plans.reduce(
               (d.strand === 'email' ? (
                 <ul class="cards">
                   {items.map((item) => (
-                    <li class="ec">
-                      <p class="ec__title">{item.title}</p>
+                    /* A link only where there is a case study behind the send.
+                       The rest stay plain cards: wrapping every one in an
+                       anchor to nowhere would make the whole wall look
+                       clickable and reward none of it. */
+                    <li class:list={['ec', item.href && 'ec--linked']}>
+                      {item.href ? (
+                        <a class="ec__link" href={item.href}>
+                          <span class="ec__title">{item.title}</span>
+                          <span class="ec__go label">See the campaign</span>
+                        </a>
+                      ) : (
+                        <p class="ec__title">{item.title}</p>
+                      )}
                       {item.date && <p class="ec__date">{item.date}</p>}
                       {/* Placeholders until the real copy is written, so the
                           card shows its full shape rather than looking
@@ -274,7 +285,26 @@ const dated = plans.reduce(
     transform: translateY(-2px);
   }
 
+  .ec--linked {
+    border-color: color-mix(in srgb, var(--color-flare) 55%, transparent);
+  }
+
+  .ec__link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ec__go {
+    color: var(--color-flare);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
   .ec__title {
+    display: block;
     margin: 0;
     font-family: var(--font-display);
     font-size: var(--text-step-1);
