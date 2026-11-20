@@ -23,12 +23,20 @@ interface Props {
   meta?: string;
   /** Open on load. Off by default: the point is that the headers are the page. */
   open?: boolean;
+  /**
+   * Which room it is in. `dark` is the CSJACKO site. `splash` is the cream
+   * Splash page, which needs the same component in its own palette: the
+   * default bone rules and red marker are invisible and wrong respectively on
+   * cream. A prop rather than a second component, because the behaviour, the
+   * markup and the accessibility are identical and only the colours differ.
+   */
+  tone?: 'dark' | 'splash';
 }
 
-const { title, meta, open = false } = Astro.props;
+const { title, meta, open = false, tone = 'dark' } = Astro.props;
 ---
 
-<details class="dis" open={open}>
+<details class:list={['dis', `dis--${tone}`]} open={open}>
   <summary class="dis__head">
     <span class="dis__title">{title}</span>
     {meta && <span class="dis__meta label">{meta}</span>}
@@ -122,5 +130,49 @@ const { title, meta, open = false } = Astro.props;
 
   .dis__body {
     padding-block-end: clamp(1.5rem, 4vh, 2.5rem);
+  }
+
+  /* -- Splash room -------------------------------------------------------
+     Ink rules on cream, and the plus/minus takes the oxblood that the Splash
+     system reserves for small red marks. Orange would be the display colour
+     but it is 3.21:1 on cream, which is fine for 24px display type and not
+     fine for a 2px bar. */
+  .dis--splash {
+    border-block-end-color: color-mix(in srgb, #17120f 22%, transparent);
+  }
+
+  .dis--splash:first-of-type {
+    border-block-start-color: color-mix(in srgb, #17120f 22%, transparent);
+  }
+
+  .dis--splash .dis__title {
+    font-family: 'Creamy Chicken', 'Arial Black', sans-serif;
+    color: #e2572b;
+    text-shadow: 0.07em 0.07em 0 #a8331c;
+    letter-spacing: 0.005em;
+  }
+
+  .dis--splash .dis__head:hover .dis__title,
+  .dis--splash .dis__head:focus-visible .dis__title {
+    color: #a0290b;
+    text-shadow: none;
+  }
+
+  /* Oxblood at full strength, not deep red at 0.85. Deep red measures 5.72:1
+     on cream and the opacity dragged it under AA; oxblood is 6.41:1 and is the
+     colour the Splash system nominates for small red text for exactly this
+     reason. */
+  .dis--splash .dis__meta {
+    font-family: 'Nunito', system-ui, sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #a0290b;
+    opacity: 1;
+  }
+
+  .dis--splash .dis__mark::before,
+  .dis--splash .dis__mark::after {
+    background-color: #a0290b;
   }
 </style>

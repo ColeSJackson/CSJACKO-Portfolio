@@ -1,0 +1,58 @@
+---
+/**
+ * The oxblood wave that tops and tails a Splash band.
+ *
+ * An inline SVG rather than a border-radius or a clip-path, because the edge
+ * has to read as torn paper and anything built from radii reads as a button.
+ * The path is a single asymmetric cubic run: a symmetrical wave repeated at
+ * both ends of a band looks like a mistake rather than a deckle edge, which is
+ * what `flip` is for.
+ *
+ * preserveAspectRatio="none" is deliberate. The wave is decoration with no
+ * internal detail worth protecting, so letting it stretch to the viewport
+ * width keeps one element doing the job at every breakpoint instead of a
+ * repeating tile that visibly seams.
+ */
+
+interface Props {
+  /** Mirrors it vertically, for the bottom of a band. */
+  flip?: boolean;
+  class?: string;
+}
+
+const { flip = false, class: className = '' } = Astro.props;
+---
+
+<svg
+  class:list={['sp-wave', flip && 'sp-wave--flip', className]}
+  viewBox="0 0 1200 40"
+  preserveAspectRatio="none"
+  aria-hidden="true"
+  focusable="false"
+>
+  {/* Fills downward from the top edge, so stacking it above a band closes the
+      gap between the page ground and the band colour. */}
+  <path
+    d="M0 40 L0 18 C 110 2 198 34 312 22 C 430 9 498 36 622 28 C 742 20 806 2 930 12 C 1042 21 1118 38 1200 24 L1200 40 Z"
+    fill="#a0290b"
+  />
+</svg>
+
+<style>
+  .sp-wave {
+    display: block;
+    width: 100%;
+    height: clamp(16px, 2.2vw, 30px);
+    /* Kills the inline-element baseline gap that would otherwise show a hairline
+       of page ground between the wave and its band. */
+    vertical-align: top;
+    margin-bottom: -1px;
+    pointer-events: none;
+  }
+
+  .sp-wave--flip {
+    transform: scaleY(-1);
+    margin-bottom: 0;
+    margin-top: -1px;
+  }
+</style>

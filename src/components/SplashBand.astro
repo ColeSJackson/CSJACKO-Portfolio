@@ -1,0 +1,485 @@
+---
+/**
+ * The Splash band on the homepage.
+ *
+ * Sits between Proudest work and Get in touch, and its job is to be a
+ * surprise: the page has been black and red for two full screens, and then the
+ * ground turns to cream paper with oxblood waves top and bottom. It is the one
+ * place on the site where the palette breaks, which is exactly why it reads as
+ * another world rather than another section.
+ *
+ * It is NOT a fifth discipline button. The four buttons in the hero are
+ * skills; Splash is a brand. So it gets a band and a page of its own instead
+ * of a place in a row it does not belong in.
+ *
+ * The lockup carries `transition:name`, shared with the hero on /splash, so
+ * clicking through tweens this mark up into that one instead of cutting. That
+ * needs the ClientRouter in Base.astro, which is already there for the CSJACKO
+ * mark doing the same thing.
+ *
+ * Cost worth knowing: importing splash.css here pulls Jelly Choco and Nunito
+ * onto the homepage, which is the page that matters most. Both are
+ * font-display: swap and only fetched because this band actually sets type in
+ * them. Creamy Chicken is not used here, so it is not fetched.
+ */
+
+import { Picture, getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import SplashWave from './SplashWave.astro';
+import ChalkAnnotation from './ChalkAnnotation.astro';
+import { REELS, reelSrc } from '../data/reels';
+import { SPLASH } from '../config';
+import '../styles/splash.css';
+
+/* Four short ones. The band autoplays them, so length is the selection
+   criterion as much as quality: a 68 second explainer looping in a strip is
+   noise, and these are all under eleven seconds. */
+const FEATURED = [
+  'coles-splash-pack',
+  'basket-discount-meter',
+  'mystery-back-issue',
+  'absolute-batman-splash-pack',
+];
+
+const posters = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/reels/splash/*.jpg',
+  { eager: true },
+);
+
+const clips = FEATURED.map((slug) => {
+  const reel = REELS.find((r) => r.slug === slug);
+  if (!reel) throw new Error(`SplashBand: no reel "${slug}" in src/data/reels.ts`);
+  return {
+    ...reel,
+    src: reelSrc(reel),
+    poster: posters[`../assets/reels/splash/${slug}.jpg`]!.default,
+  };
+});
+
+const splatters = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/splash/splash-splatter-*.png',
+  { eager: true },
+);
+/* Through the image pipeline rather than served as the source PNGs. The three
+   masters are 633KB between them, which is more than the rest of the homepage
+   put together for three pieces of decoration; as WebP with the alpha intact
+   they come to a fraction of that. Sized at 840, which covers the largest
+   rendered width (420 CSS px) on a 2x screen. */
+const splatterArt = await Promise.all(
+  Object.keys(splatters)
+    .sort()
+    .slice(0, 3)
+    .map((k) =>
+      getImage({ src: splatters[k].default, format: 'webp', width: 840, quality: 72 }),
+    ),
+);
+---
+
+<SplashWave />
+
+<section class="splash-world sb" aria-labelledby="sb-heading">
+  {/* Decoration, so it is hidden and cannot be tabbed to. The splatters drift
+      on transform only, which the compositor handles without repainting the
+      band under them. */}
+  <div class="sb__splatters" aria-hidden="true">
+    {
+      splatterArt.map((src, i) => (
+        /* Lazy and low priority, deliberately. These are three decorative
+           PNGs in a band about three screens down, and eager by default they
+           queued ahead of the hero portrait, which is the homepage's LCP
+           element on a phone. Decoration must never outrank the thing being
+           measured. */
+        <img
+          class={`sb__splatter sb__splatter--${i + 1}`}
+          src={src.src}
+          alt=""
+          width={src.attributes?.width ?? 840}
+          height={src.attributes?.height ?? 1120}
+          loading="lazy"
+          decoding="async"
+          fetchpriority="low"
+        />
+      ))
+    }
+  </div>
+
+  <div class="sb__inner">
+    <div class="sb__copy">
+      <img
+        class="sb__logo"
+        src="/splash/splash-lockup.svg"
+        alt=""
+        width="871"
+        height="540"
+        loading="lazy"
+        decoding="async"
+        transition:name="splash-mark"
+      />
+
+      {/* Jelly Choco, per the brief. The face has no full stop, comma or
+          apostrophe, so the line is written without any: it is not a style
+          choice, the glyphs do not exist. */}
+      <h2 id="sb-heading" class="sb__head sp-marker">Oh and I run a comic shop</h2>
+
+      <p class="sb__line">
+        Splash Comics. Car boot finds to a live online shop in three months.
+      </p>
+
+      <p class="sb__cta">
+        <a class="sb__btn" href="/splash">See Splash</a>
+        {/* Hangs off the button, in the same hand as the four on the hero. */}
+        <ChalkAnnotation
+          target="See Splash button"
+          text="my baby"
+          shape="hook"
+          tilt={-7}
+          drop={0}
+          side="left"
+          class="sb__chalk"
+        />
+      </p>
+    </div>
+
+    <ul class="sb__clips">
+      {
+        clips.map((clip) => (
+          <li class="sb__clip">
+            {/* The poster is the rendered state and the video arrives over the
+                top of it. src is held in data-src and only assigned when the
+                band is near the viewport, so the homepage does not fetch four
+                videos on first paint; under reduced motion it is never
+                assigned at all and the posters are the whole band. */}
+            <a class="sb__clip-link" href="/splash" aria-label={`Splash Comics: ${clip.title}`}>
+              <Picture
+                src={clip.poster}
+                alt={`Still from ${clip.title}`}
+                formats={['avif', 'webp']}
+                fallbackFormat="jpg"
+                widths={[220, 360, 520]}
+                sizes="(min-width: 900px) 18vw, 42vw"
+                loading="lazy"
+                decoding="async"
+                class="sb__clip-img"
+              />
+              <video
+                class="sb__clip-video"
+                data-sb-video
+                data-src={clip.src}
+                muted
+                loop
+                playsinline
+                preload="none"
+                aria-hidden="true"
+                tabindex="-1"></video>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<SplashWave flip />
+
+<style>
+  .sb {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(2rem, 6vw, 4rem) var(--spacing-gutter);
+    /* The ground change is the whole point, so it is opaque: the drifting red
+       field and its grain stop at this edge, which is what makes the band read
+       as paper rather than as a tinted panel over the same surface. */
+    background-color: var(--sp-cream);
+    color: var(--sp-ink);
+  }
+
+  .sb__inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    max-width: 78rem;
+    margin-inline: auto;
+  }
+
+  .sb__logo {
+    width: clamp(170px, 20vw, 260px);
+    height: auto;
+    margin-bottom: 0.9rem;
+  }
+
+  .sb__head {
+    font-size: clamp(2rem, 5.2vw, 3.6rem);
+    line-height: 1.05;
+    margin: 0 0 0.6rem;
+  }
+
+  .sb__line {
+    max-width: 34ch;
+    margin: 0;
+    font-family: var(--sp-body);
+    font-weight: 700;
+    font-size: var(--text-step-1);
+    line-height: 1.45;
+  }
+
+  /* The trailing space is load-bearing. The annotation hangs roughly 100px
+     below the button, the band clips its own overflow so the splatters cannot
+     escape it, and without room reserved here the handwriting was being
+     painted away entirely: present in the DOM, correct colour, fully drawn,
+     and invisible. */
+  .sb__cta {
+    position: relative;
+    margin: clamp(1.75rem, 4vh, 2.5rem) 0 clamp(4.5rem, 9vh, 6rem);
+  }
+
+  .sb__btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75em 1.4em;
+    font-family: var(--sp-body);
+    font-weight: 900;
+    font-size: var(--text-step-0);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    color: var(--sp-panel);
+    background-color: var(--sp-oxblood);
+    border: 3px solid var(--sp-ink);
+    border-radius: 999px;
+    transition:
+      background-color 220ms var(--ease-settle),
+      transform 220ms var(--ease-settle);
+  }
+
+  .sb__btn:hover,
+  .sb__btn:focus-visible {
+    background-color: var(--sp-orange);
+    transform: translateY(-2px);
+  }
+
+  /* The chalk is drawn in bone for the black site. On cream it has to be ink,
+     or it is an invisible mark. :global because the annotation's root carries
+     its own component's scope id, not this one's. */
+  .sb__cta :global(.chalk) {
+    left: 0;
+    top: 100%;
+    margin-top: -0.4rem;
+  }
+
+  .sb__cta :global(.chalk__line),
+  .sb__cta :global(.chalk__dust) {
+    stroke: #17120f;
+  }
+
+  .sb__cta :global(.chalk__text) {
+    color: #17120f;
+  }
+
+  /* -- Clips -------------------------------------------------------------- */
+  .sb__clips {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(0.4rem, 1vw, 0.75rem);
+  }
+
+  .sb__clip-link {
+    position: relative;
+    display: block;
+    aspect-ratio: 9 / 16;
+    overflow: hidden;
+    border: 3px solid var(--sp-ink);
+    border-radius: 0.6rem;
+    line-height: 0;
+  }
+
+  .sb__clip-img,
+  .sb__clip-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Hidden until it has frames to show, so the poster is never swapped for a
+     black rectangle while the file is still arriving. */
+  .sb__clip-video {
+    opacity: 0;
+    transition: opacity 400ms var(--ease-settle);
+  }
+
+  .sb__clip-video.is-playing {
+    opacity: 1;
+  }
+
+  /* -- Splatters ---------------------------------------------------------- */
+  .sb__splatters {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .sb__splatter {
+    position: absolute;
+    width: clamp(180px, 26vw, 420px);
+    height: auto;
+    opacity: 0.22;
+    will-change: transform;
+  }
+
+  .sb__splatter--1 {
+    top: -12%;
+    left: -6%;
+    animation: sb-drift-a 47s ease-in-out infinite alternate;
+  }
+
+  .sb__splatter--2 {
+    bottom: -18%;
+    right: -4%;
+    animation: sb-drift-b 61s ease-in-out infinite alternate;
+  }
+
+  .sb__splatter--3 {
+    top: 38%;
+    right: 34%;
+    width: clamp(120px, 16vw, 260px);
+    opacity: 0.14;
+    animation: sb-drift-a 73s ease-in-out infinite alternate;
+  }
+
+  @keyframes sb-drift-a {
+    from { transform: translate3d(0, 0, 0) rotate(0deg); }
+    to   { transform: translate3d(3vw, 2vh, 0) rotate(7deg); }
+  }
+
+  @keyframes sb-drift-b {
+    from { transform: translate3d(0, 0, 0) rotate(0deg); }
+    to   { transform: translate3d(-4vw, -3vh, 0) rotate(-9deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sb__splatter {
+      animation: none;
+    }
+  }
+
+  /* -- Narrow ------------------------------------------------------------- */
+  @media (max-width: 860px) {
+    .sb__inner {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* Stacked, so the clips are the next thing down rather than beside it.
+       The annotation still needs its clearance or it lands on the first clip. */
+    .sb__cta {
+      margin-bottom: 4.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .sb__clips {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Plays the band's clips only while the band is on screen.
+   *
+   * Geometry on scroll rather than IntersectionObserver, for the same reason
+   * Reveal.astro does it this way: IO makes behaviour depend on a callback
+   * firing, and when it does not fire here you get four silent black
+   * rectangles where the posters used to be. A bounding-box read is a couple
+   * of numbers on a throttled scroll and cannot silently not happen.
+   *
+   * Sources are assigned on first approach, not at parse time, so the homepage
+   * does not spend four video requests before anyone has scrolled to them.
+   */
+  function initSplashBand() {
+    const found = document.querySelector<HTMLElement>('.sb');
+    if (!found) return;
+    /* Rebound after the guard: TypeScript drops a narrowing when the value is
+       read inside a hoisted function declaration, and update() below is one. */
+    const band: HTMLElement = found;
+
+    const videos = Array.from(
+      band.querySelectorAll<HTMLVideoElement>('[data-sb-video]'),
+    );
+    if (!videos.length) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    /* Under reduced motion the band is the posters and nothing else. Autoplay
+       is exactly the kind of unrequested movement that setting exists to turn
+       off, so the files are never even fetched. */
+    if (reduced.matches) return;
+
+    let loaded = false;
+
+    function load() {
+      if (loaded) return;
+      loaded = true;
+      for (const v of videos) {
+        const src = v.dataset.src;
+        if (src) v.src = src;
+      }
+    }
+
+    function update() {
+      const r = band.getBoundingClientRect();
+      const h = window.innerHeight;
+
+      /* Load a screen early so the first frame is ready by the time the band
+         arrives rather than fading in a beat after it. */
+      if (r.top < h * 2 && r.bottom > -h) load();
+
+      const onScreen = r.top < h * 0.95 && r.bottom > h * 0.05;
+      for (const v of videos) {
+        if (onScreen) {
+          if (v.paused) {
+            v.play()
+              .then(() => v.classList.add('is-playing'))
+              .catch(() => {
+                /* A browser that refuses muted autoplay leaves the poster up,
+                   which is a correct state rather than a broken one. */
+              });
+          }
+        } else if (!v.paused) {
+          v.pause();
+        }
+      }
+    }
+
+    let ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      setTimeout(() => {
+        ticking = false;
+        update();
+      }, 120);
+    }
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+
+    /* Leaving the tab should not leave four videos decoding in the background. */
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) videos.forEach((v) => v.pause());
+      else update();
+    });
+  }
+
+  initSplashBand();
+  document.addEventListener('astro:page-load', initSplashBand);
+</script>

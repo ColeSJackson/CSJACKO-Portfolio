@@ -1,0 +1,173 @@
+/* ---------------------------------------------------------------------------
+   Splash Comics, as a room inside this site.
+
+   Every value here is sampled from the Splash brand kit at
+   ~/Splash Comics!/01 Brand + Fonts/Brand Kit, not eyedropped off a
+   screenshot. The brief supplied #FDFBDB / #FFFDEF / #93331B / #C5342F; the
+   kit measures the same four as #F7EDD8 / #FFF8EA / #A0290B / #E2572B. The kit
+   wins, because it is the source the stickers and the shop are already built
+   from, and a portfolio page that is a shade off its own brand is worse than
+   one that matches.
+
+   Scoped under .splash-world rather than :root. These tokens share names with
+   nothing in global.css, but a cream page inside a black site is exactly the
+   kind of thing that leaks, and a class is one grep away from proving it has
+   not.
+
+   NO FILM GRAIN IN HERE. The paper feel comes from the cream ground and the
+   splatters. Grain is the CSJACKO site's texture and putting it on Splash
+   would blur the line the page exists to draw.
+
+   LICENSING, UNRESOLVED. Jelly Choco is a personal-use cut and Creamy Chicken
+   ships with no licence file. Both are loaded below. Neither is cleared for a
+   public site. See _incoming/splash/notes.md.
+   --------------------------------------------------------------------------- */
+
+/* The display face. Uppercase, confident, always with the hard offset shadow. */
+@font-face {
+  font-family: 'Creamy Chicken';
+  src: url('/fonts/splash/CreamyChicken.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* The marker face. 108 glyphs: A-Z, a-z, 0-9, £, / and a middot, and NO full
+   stop, comma, apostrophe, hyphen, question mark or ampersand. Any string set
+   in this face must contain none of those or it renders with holes in it. That
+   is why every Jelly Choco line on the page is a punctuation-free fragment. */
+@font-face {
+  font-family: 'Jelly Choco';
+  src: url('/fonts/splash/JellyChoco.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* The workhorse. Anything with a sentence in it. SIL Open Font Licence, so
+   this is the only one of the three that is actually cleared for the web. */
+@font-face {
+  font-family: 'Nunito';
+  src: url('/fonts/splash/Nunito-var.woff2') format('woff2-variations');
+  font-weight: 200 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* The page ground, on html and body. Literal values, not the tokens below:
+   those are scoped to .splash-world and html sits outside it. Being opaque is
+   the point, because it covers the drifting field and its grain. */
+.ground-splash {
+  background-color: #f7edd8;
+  color: #17120f;
+}
+
+.splash-world {
+  --sp-cream: #f7edd8; /* page base, most of every layout */
+  --sp-panel: #fff8ea; /* cards and panels sitting on the base */
+  --sp-cream-deep: #ebe1cd; /* wells, placeholders, table headers */
+  --sp-ink: #17120f; /* every rule and all body text. never pure black */
+  --sp-peach: #eda778; /* swash and block shadows. no text */
+  --sp-terra: #d97757; /* second tier fills. no text */
+  --sp-orange: #e2572b; /* the primary. display type only, 24px and up */
+  --sp-red: #a8331c; /* display shadow, eyebrows, marker copy */
+  --sp-oxblood: #a0290b; /* logo ink, links, small red text. the safe red */
+  --sp-grey: #7c756a; /* dashed keylines and metadata */
+
+  --sp-display: 'Creamy Chicken', 'Arial Black', Haettenschweiler, sans-serif;
+  --sp-marker: 'Jelly Choco', 'Trebuchet MS', ui-rounded, sans-serif;
+  --sp-body: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+
+  --sp-rule: 3px solid var(--sp-ink);
+  /* Down and right, never blurred. */
+  --sp-shadow: 0.07em 0.07em 0 var(--sp-red);
+
+  background-color: var(--sp-cream);
+  color: var(--sp-ink);
+  font-family: var(--sp-body);
+  font-weight: 400;
+  /* The CSJACKO site runs bold everywhere, which is its voice. Nunito at 400
+     is Splash's, and without this reset the inherited 700 makes every
+     paragraph shout. */
+  line-height: 1.55;
+}
+
+/* Display type. Uppercase with the hard shadow, line height under 1. */
+.splash-world .sp-display {
+  font-family: var(--sp-display);
+  text-transform: uppercase;
+  line-height: 0.93;
+  letter-spacing: 0.005em;
+  color: var(--sp-orange);
+  text-shadow: var(--sp-shadow);
+  margin: 0;
+}
+
+/* The marker asides. Lowercase fragments, no punctuation, by necessity. */
+.splash-world .sp-marker {
+  font-family: var(--sp-marker);
+  color: var(--sp-red);
+  line-height: 1.25;
+  margin: 0;
+}
+
+/* The only letterspaced thing in the system, and only ever this much. */
+.splash-world .sp-eyebrow {
+  font-family: var(--sp-body);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: var(--text-step--1);
+  color: var(--sp-red);
+  margin: 0;
+}
+
+.splash-world .sp-body {
+  /* Roughly 62 characters, per the system. */
+  max-width: 62ch;
+  font-size: var(--text-step-1);
+  line-height: 1.55;
+}
+
+.splash-world a {
+  color: var(--sp-oxblood);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+
+/* ---------------------------------------------------------------------------
+   The oxblood wave that tops and tails every band.
+
+   An SVG border-image rather than a pseudo-element with a border-radius: the
+   edge has to read as torn paper, and a curve made from radii reads as a
+   button. Two orientations, because a wave that is identical top and bottom
+   looks like a mistake rather than a deckle edge.
+   --------------------------------------------------------------------------- */
+.splash-world .sp-wave {
+  display: block;
+  width: 100%;
+  height: clamp(18px, 2.5vw, 34px);
+  /* No type sits on this, and it is purely an edge treatment. */
+  pointer-events: none;
+}
+
+.splash-world .sp-band {
+  background-color: var(--sp-oxblood);
+  color: var(--sp-panel);
+}
+
+.splash-world .sp-band .sp-display {
+  color: var(--sp-panel);
+  text-shadow: 0.07em 0.07em 0 rgb(0 0 0 / 0.28);
+}
+
+.splash-world .sp-band a {
+  color: var(--sp-panel);
+}
+
+/* Panels: the cards that sit on the base. */
+.splash-world .sp-panel {
+  background-color: var(--sp-panel);
+  border: var(--sp-rule);
+  border-radius: 0.9rem;
+}

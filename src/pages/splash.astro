@@ -1,0 +1,883 @@
+---
+/**
+ * Splash Comics.
+ *
+ * Its own world, still clearly part of this site. The CSJACKO mark stays at
+ * the top centre and the contact block stays at the bottom, so you can always
+ * get back; everything between them is Splash's cream, oxblood and Creamy
+ * Chicken rather than CSJACKO's black and red.
+ *
+ * Deliberately NOT a fifth homepage button. The four buttons are skills and
+ * Splash is a brand, so it gets a band on the homepage and this page instead.
+ *
+ * No film grain anywhere on here. That is structural, not an exception: the
+ * cream ground is opaque, so it covers the fixed field that carries the grain
+ * tile. See the `splash` ground in Base.astro.
+ *
+ * Every number in the stat strip is checked in _incoming/splash/notes.md
+ * before this merges. Nothing on this page is a placeholder: a section with no
+ * assets behind it does not render at all rather than showing an empty frame.
+ */
+
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Base from '../layouts/Base.astro';
+import ContactFooter from '../components/ContactFooter.astro';
+import Disclosure from '../components/Disclosure.astro';
+import ReelLightbox from '../components/ReelLightbox.astro';
+import SplashWave from '../components/SplashWave.astro';
+import { REELS, reelSrc } from '../data/reels';
+import { SPLASH } from '../config';
+import '../styles/splash.css';
+
+/* Page-only imagery: shop screenshots, the Splash Zone still and the lockup.
+   Globbed rather than imported one by one so a missing file is an absent
+   panel rather than a build error, which is the same bargain the rest of the
+   site makes with its asset folders. */
+const pageArt = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/splash/*.{jpg,png}',
+  { eager: true },
+);
+const art = (name: string): ImageMetadata | undefined =>
+  pageArt[`../assets/splash/${name}`]?.default;
+
+const shopShots = ['shop-home.jpg', 'shop-listing.jpg']
+  .map((n) => ({ name: n, src: art(n) }))
+  .filter((s): s is { name: string; src: ImageMetadata } => Boolean(s.src));
+
+const zoneStill = art('splash-zone.jpg');
+
+/* The design walls hold the finished pieces. These globs are the same files,
+   pulled in here so each section shows its own work rather than sending
+   someone to another page to find out what is being described. */
+const emailArt = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/design/email/splash-*.jpg',
+  { eager: true },
+);
+const paidArt = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/design/paid-social/splash-*.jpg',
+  { eager: true },
+);
+const brandArt = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/design/brand/splash-*.jpg',
+  { eager: true },
+);
+
+const pick = (
+  mods: Record<string, { default: ImageMetadata }>,
+  n: number,
+): ImageMetadata[] =>
+  Object.keys(mods)
+    .sort()
+    .slice(0, n)
+    .map((k) => mods[k].default);
+
+const emailCount = Object.keys(emailArt).length;
+const paidCount = Object.keys(paidArt).length;
+const brandCount = Object.keys(brandArt).length;
+
+const reels = REELS.filter((r) => r.brand === 'splash');
+const reelPosters = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/reels/splash/*.jpg',
+  { eager: true },
+);
+const splashReels = reels.map((r) => ({
+  ...r,
+  src: reelSrc(r),
+  poster: reelPosters[`../assets/reels/splash/${r.slug}.jpg`]!.default,
+}));
+
+/* The walkthrough is a reel like any other, so it plays in the same viewer
+   rather than being a second video player on the page. */
+const zoneReel = splashReels.find((r) => r.slug === 'splash-zone-walkthrough');
+
+/* Checked against the real folders, not guessed. Every one of these is in
+   _incoming/splash/notes.md for Cole to confirm before this ships. */
+const STATS = [
+  { label: 'Trading since', value: '11 Aug 2026' },
+  { label: 'Online shop live', value: '13 Nov 2026' },
+  { label: 'Trade suppliers', value: '3' },
+  { label: 'Comic cons traded', value: '3' },
+  { label: 'Videos made', value: String(reels.length) },
+];
+
+/* Klaviyo flows, read off the flow folders rather than written from memory.
+   No subject lines yet, so none are shown: an email card with SUBJECT LINE in
+   it is a placeholder, and this page does not ship placeholders. */
+const FLOWS = [
+  { name: 'Welcome series', detail: 'Four emails, triggered on signup' },
+  { name: 'Abandoned checkout', detail: 'Four emails plus an add-to-cart nudge' },
+  { name: 'Browse abandonment', detail: 'Two emails, triggered on a viewed product' },
+  { name: 'Post purchase', detail: 'Thank you and a what-to-read-next' },
+  { name: 'Starter Pack', detail: 'Three emails for first-time buyers' },
+  { name: 'Compact Comics', detail: 'Two emails for the compact range' },
+  { name: 'Absolute range', detail: 'Drop announcement for the DC Absolute line' },
+];
+---
+
+<Base
+  title="Splash Comics / Cole SJ"
+  description="Splash Comics, a comic shop I built from car boot finds to a live online shop in three months. The brand, the Shopify theme, a walkable 3D shop, the emails, the ads and every video."
+  ground="splash"
+>
+  <div class="splash-world sp">
+    {/* -- Hero ---------------------------------------------------------- */}
+    <header class="sp__hero">
+      {/* The lockup is the title visually, but an image is not a heading, and
+          a page whose outline starts at h2 is a page a screen reader cannot
+          tell you the name of. */}
+      <h1 class="sr-only">Splash Comics</h1>
+      {/* The lockup with its oxblood baked in, not the currentColor variant:
+          an <img> is a separate document, so page CSS cannot reach inside it
+          and the recolourable version would render black. Dimensions are the
+          file's own 870.64 x 539.54, so the box reserved matches what lands
+          and nothing shifts when it decodes. */}
+      <img
+        class="sp__logo"
+        src="/splash/splash-lockup.svg"
+        alt="Splash Comics"
+        width="871"
+        height="540"
+        loading="eager"
+        decoding="async"
+      />
+      <p class="sp__lede sp-body">
+        A comic shop I built from car boot finds to a proper online shop in
+        three months.
+      </p>
+      {/* Punctuation-free, by necessity: Jelly Choco has no full stop, comma
+          or apostrophe. See the note in splash.css. */}
+      <p class="sp__aside sp-marker">all of it me</p>
+    </header>
+
+    {/* -- Stat strip ---------------------------------------------------- */}
+    <SplashWave />
+    <section class="sp-band sp__stats" aria-label="Splash Comics in numbers">
+      <dl class="sp__stat-row">
+        {
+          STATS.map((s) => (
+            <div class="sp__stat">
+              <dt class="sp-eyebrow sp__stat-label">{s.label}</dt>
+              <dd class="sp__stat-value">{s.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <p class="sp__channels">
+        TikTok, Instagram, YouTube Shorts and X
+      </p>
+    </section>
+    <SplashWave flip />
+
+    {/* -- The story ----------------------------------------------------- */}
+    <section class="sp__story" aria-labelledby="sp-story">
+      <h2 id="sp-story" class="sp-display sp__h2">The story</h2>
+      <div class="sp__story-copy">
+        <p class="sp-body">
+          Splash Comics is my own comic shop. I started it in August 2026,
+          buying job lots from car boots and Facebook Marketplace and selling
+          them on eBay and Whatnot. By November it was a live online shop at
+          splashcomics.co.uk selling new Marvel, DC and indie comics alongside
+          back issues, with trade accounts at Lunar, Gardners and Penguin
+          Random House.
+        </p>
+        <p class="sp-body">
+          I do all of it: the buying, the brand, the website, the emails, the
+          ads and every single video.
+        </p>
+      </div>
+    </section>
+
+    {/* -- What I built -------------------------------------------------- */}
+    <section class="sp__built" aria-labelledby="sp-built">
+      <h2 id="sp-built" class="sp-display sp__h2">What I built</h2>
+
+      <Disclosure
+        tone="splash"
+        title="Short form content"
+        meta={`${reels.length} videos`}
+      >
+        <p class="sp-body sp__panel-lede">
+          Two videos a week plus carousels in between, cross-posted to X. The
+          Origins series covers how the shop actually started, from the first
+          car boot to the first order going out. The explainers are the shop
+          counter conversation: where to start with Daredevil, what the comic
+          ages are, what actually makes a book valuable.
+        </p>
+
+        <ul class="sp__reels">
+          {
+            splashReels.map((reel, i) => (
+              <li class="sp__reel">
+                <button
+                  type="button"
+                  class="sp__reel-btn"
+                  data-reel
+                  data-src={reel.src}
+                  data-title={reel.title}
+                  data-poster={reel.poster.src}
+                >
+                  <span class="sr-only">Play: </span>
+                  <Picture
+                    src={reel.poster}
+                    alt={`Still from ${reel.title}`}
+                    formats={['avif', 'webp']}
+                    fallbackFormat="jpg"
+                    widths={[260, 420, 640]}
+                    sizes="(min-width: 1100px) 22vw, (min-width: 700px) 30vw, 45vw"
+                    loading={i < 4 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    class="sp__reel-img"
+                  />
+                  <span class="sp__reel-play" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                      <path d="M8 5v14l11-7z" fill="currentColor" />
+                    </svg>
+                  </span>
+                  <span class="sp__reel-title">{reel.title}</span>
+                </button>
+              </li>
+            ))
+          }
+        </ul>
+      </Disclosure>
+
+      {
+        shopShots.length > 0 && (
+          <Disclosure tone="splash" title="The shop" meta="Custom Shopify theme">
+            <p class="sp-body sp__panel-lede">
+              A custom Shopify theme I built with Claude Code. New releases,
+              back issues, Splash Packs and the compact range, with a basket
+              discount meter that fills as you add books.
+            </p>
+            <div class="sp__shots">
+              {shopShots.map((shot) => (
+                <figure class="sp__shot sp-panel">
+                  <Picture
+                    src={shot.src}
+                    alt="The Splash Comics shop, built on a custom Shopify theme."
+                    formats={['avif', 'webp']}
+                    fallbackFormat="jpg"
+                    widths={[560, 900, 1400]}
+                    sizes="(min-width: 900px) 46vw, 92vw"
+                    loading="lazy"
+                    decoding="async"
+                    class="sp__shot-img"
+                  />
+                </figure>
+              ))}
+            </div>
+            <p class="sp__cta-line">
+              <a class="sp__btn" href={SPLASH.shop} target="_blank" rel="noopener noreferrer">
+                Have a look at the shop
+                <span class="sr-only">(opens in a new tab)</span>
+              </a>
+            </p>
+          </Disclosure>
+        )
+      }
+
+      {
+        zoneReel && (
+          <Disclosure tone="splash" title="The Splash Zone" meta="A walkable 3D shop">
+            <p class="sp-body sp__panel-lede">
+              A walkable 3D comic shop on the site, with the real stock on the
+              shelves. There is an account and levels system where every comic
+              bought counts as an issue, and a paint-drenched shopkeeper behind
+              the counter.
+            </p>
+            {zoneStill && (
+              <figure class="sp__zone sp-panel">
+                <button
+                  type="button"
+                  class="sp__zone-btn"
+                  data-reel
+                  data-src={zoneReel.src}
+                  data-title={zoneReel.title}
+                  data-poster={zoneReel.poster.src}
+                  aria-label={`Play the Splash Zone walkthrough`}
+                >
+                  <Picture
+                    src={zoneStill}
+                    alt="Inside the Splash Zone, the walkable 3D comic shop."
+                    formats={['avif', 'webp']}
+                    fallbackFormat="jpg"
+                    widths={[420, 700, 1080]}
+                    sizes="(min-width: 900px) 52vw, 92vw"
+                    loading="lazy"
+                    decoding="async"
+                    class="sp__zone-img"
+                  />
+                  <span class="sp__zone-play" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="26" height="26">
+                      <path d="M8 5v14l11-7z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+                <figcaption class="sp__zone-cap sp-eyebrow">
+                  Walkthrough
+                </figcaption>
+              </figure>
+            )}
+            <p class="sp__cta-line">
+              <a class="sp__btn" href={SPLASH.shop} target="_blank" rel="noopener noreferrer">
+                Enter the Splash Zone
+                <span class="sr-only">(opens in a new tab)</span>
+              </a>
+            </p>
+          </Disclosure>
+        )
+      }
+
+      {
+        emailCount > 0 && (
+          <Disclosure tone="splash" title="Email" meta={`${emailCount} designs`}>
+            <p class="sp-body sp__panel-lede">
+              Klaviyo, designed and built end to end. The campaigns are
+              informational and product led rather than hard sell, because the
+              list signed up for comics and not for discounts.
+            </p>
+            <ul class="sp__flows">
+              {FLOWS.map((f) => (
+                <li class="sp__flow">
+                  <span class="sp__flow-name">{f.name}</span>
+                  <span class="sp__flow-detail">{f.detail}</span>
+                </li>
+              ))}
+            </ul>
+            <div class="sp__mini">
+              {pick(emailArt, 4).map((src) => (
+                <figure class="sp__mini-cell sp-panel">
+                  <Picture
+                    src={src}
+                    alt="A Splash Comics email design."
+                    formats={['avif', 'webp']}
+                    fallbackFormat="jpg"
+                    widths={[260, 420]}
+                    sizes="(min-width: 700px) 22vw, 45vw"
+                    loading="lazy"
+                    decoding="async"
+                    class="sp__mini-img"
+                  />
+                </figure>
+              ))}
+            </div>
+            <p class="sp__cta-line">
+              <a class="sp__btn" href="/design/email?brand=splash">
+                All {emailCount} email designs
+              </a>
+            </p>
+          </Disclosure>
+        )
+      }
+
+      {
+        paidCount > 0 && (
+          <Disclosure tone="splash" title="Paid social" meta={`${paidCount} creatives`}>
+            <p class="sp-body sp__panel-lede">
+              A two-campaign Meta funnel: the Splash Zone walkthrough at the top
+              to introduce the shop, then the discount meter motion ad and
+              creator UGC at the bottom to close.
+            </p>
+            <div class="sp__mini">
+              {pick(paidArt, 6).map((src) => (
+                <figure class="sp__mini-cell sp-panel">
+                  <Picture
+                    src={src}
+                    alt="A Splash Comics paid social creative."
+                    formats={['avif', 'webp']}
+                    fallbackFormat="jpg"
+                    widths={[260, 420]}
+                    sizes="(min-width: 700px) 22vw, 45vw"
+                    loading="lazy"
+                    decoding="async"
+                    class="sp__mini-img"
+                  />
+                </figure>
+              ))}
+            </div>
+            <p class="sp__cta-line">
+              <a class="sp__btn" href="/design/paid-social?brand=splash">
+                All {paidCount} paid creatives
+              </a>
+              <a class="sp__btn sp__btn--ghost" href="/edit?brand=splash">
+                All {reels.length} Splash videos
+              </a>
+            </p>
+          </Disclosure>
+        )
+      }
+
+      {
+        brandCount > 0 && (
+          <Disclosure tone="splash" title="Brand and packaging" meta={`${brandCount} pieces`}>
+            <p class="sp-body sp__panel-lede">
+              The lockup, the compliment slips that go in every order, the
+              Splash Packs and the merch. The mark is a masked creature with
+              SPLASH knocked out of it, and it works as one solid shape so it
+              survives being printed on a sticker.
+            </p>
+            <div class="sp__mini">
+              {pick(brandArt, 6).map((src) => (
+                <figure class="sp__mini-cell sp-panel">
+                  <Picture
+                    src={src}
+                    alt="Splash Comics brand and packaging work."
+                    formats={['avif', 'webp']}
+                    fallbackFormat="jpg"
+                    widths={[260, 420]}
+                    sizes="(min-width: 700px) 22vw, 45vw"
+                    loading="lazy"
+                    decoding="async"
+                    class="sp__mini-img"
+                  />
+                </figure>
+              ))}
+            </div>
+            <p class="sp__cta-line">
+              <a class="sp__btn" href="/design/brand?brand=splash">
+                All {brandCount} brand pieces
+              </a>
+            </p>
+          </Disclosure>
+        )
+      }
+
+      <Disclosure tone="splash" title="Creators" meta="ComicCops collab">
+        <p class="sp-body sp__panel-lede">
+          A collab with ComicCops: a custom Splash Pack built for them, an
+          announcement and giveaway video, and an unboxing. The pack is the
+          same one that goes out to customers, which is the point of sending it
+          to someone who opens comics on camera for a living.
+        </p>
+      </Disclosure>
+
+      <Disclosure tone="splash" title="Conventions" meta="3 traded">
+        <p class="sp-body sp__panel-lede">
+          Comic Mart London, Comic Con Guildford and MegaCon Farnborough, with
+          MegaCon Birmingham booked for December. The trader table films are on
+          the video wall.
+        </p>
+        <p class="sp__cta-line">
+          <a class="sp__btn" href="/edit?brand=splash">
+            Convention films
+          </a>
+        </p>
+      </Disclosure>
+    </section>
+
+    {/* -- Closing CTA --------------------------------------------------- */}
+    <SplashWave />
+    <section class="sp-band sp__close" aria-labelledby="sp-close">
+      <h2 id="sp-close" class="sp-marker sp__close-h">Come and have a look</h2>
+      <p class="sp__cta-line sp__cta-line--centre">
+        <a class="sp__btn sp__btn--invert" href={SPLASH.shop} target="_blank" rel="noopener noreferrer">
+          Have a look at the shop
+          <span class="sr-only">(opens in a new tab)</span>
+        </a>
+      </p>
+      <p class="sp__socials">
+        <a href={SPLASH.tiktok} target="_blank" rel="noopener noreferrer">
+          {SPLASH.handle} on TikTok
+        </a>
+        <span aria-hidden="true">·</span>
+        <a href={SPLASH.instagram} target="_blank" rel="noopener noreferrer">
+          {SPLASH.handle} on Instagram
+        </a>
+      </p>
+    </section>
+    <SplashWave flip />
+  </div>
+
+  <ReelLightbox />
+  <ContactFooter />
+</Base>
+
+<style>
+  .sp {
+    /* The world is full bleed, so the wave bands reach both edges. Inner
+       sections carry their own gutter. */
+    padding: 0;
+  }
+
+  .sp__hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    padding: clamp(1.5rem, 5vh, 3.5rem) var(--spacing-gutter)
+      clamp(2rem, 6vh, 4rem);
+  }
+
+  /* The lockup has a 220px screen minimum: below that the spatter fills in and
+     it reads as a blob. The floor here is well clear of it. */
+  .sp__logo {
+    width: clamp(240px, 38vw, 480px);
+    height: auto;
+  }
+
+  .sp__lede {
+    margin: 0;
+    font-size: var(--text-step-2);
+    font-weight: 700;
+    line-height: 1.3;
+    max-width: 34ch;
+  }
+
+  .sp__aside {
+    font-size: clamp(1.1rem, 2.4vw, 1.75rem);
+    transform: rotate(-4deg);
+  }
+
+  /* -- Stat band --------------------------------------------------------- */
+  .sp__stats {
+    padding: clamp(1.5rem, 4vw, 2.75rem) var(--spacing-gutter);
+  }
+
+  .sp__stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: clamp(1rem, 3vw, 2.5rem);
+    margin: 0;
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+
+  .sp__stat-label {
+    /* On oxblood, the system's deep red is 2.8:1 and unreadable. Panel cream
+       on oxblood is 6.3:1. */
+    color: color-mix(in srgb, #fff8ea 78%, transparent);
+    margin-bottom: 0.35rem;
+  }
+
+  .sp__stat-value {
+    margin: 0;
+    font-family: var(--sp-display);
+    font-size: var(--text-step-2);
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: #fff8ea;
+    text-shadow: 0.07em 0.07em 0 rgb(0 0 0 / 0.3);
+  }
+
+  .sp__channels {
+    max-width: 72rem;
+    margin: clamp(1.25rem, 3vw, 2rem) auto 0;
+    font-weight: 700;
+    color: color-mix(in srgb, #fff8ea 85%, transparent);
+  }
+
+  /* -- Story and sections ------------------------------------------------ */
+  .sp__story,
+  .sp__built {
+    padding: clamp(2rem, 7vh, 4.5rem) var(--spacing-gutter);
+    max-width: 78rem;
+    margin-inline: auto;
+  }
+
+  .sp__h2 {
+    font-size: var(--text-step-3);
+    margin-bottom: clamp(1.25rem, 3vh, 2rem);
+  }
+
+  .sp__story-copy p + p {
+    margin-top: 1rem;
+  }
+
+  .sp__panel-lede {
+    margin: 0 0 clamp(1.25rem, 3vh, 1.75rem);
+  }
+
+  /* -- Reel grid inside a panel ------------------------------------------ */
+  .sp__reels {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(0.5rem, 1.2vw, 0.9rem);
+  }
+
+  .sp__reel-btn {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    padding: 0;
+    border: 3px solid #17120f;
+    border-radius: 0.6rem;
+    background: none;
+    cursor: pointer;
+    overflow: hidden;
+    line-height: 0;
+  }
+
+  .sp__reel-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 240ms var(--ease-settle);
+  }
+
+  .sp__reel-btn:hover .sp__reel-img,
+  .sp__reel-btn:focus-visible .sp__reel-img {
+    opacity: 0.78;
+  }
+
+  .sp__reel-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    background-color: color-mix(in srgb, #17120f 55%, transparent);
+    border: 1px solid color-mix(in srgb, #fff8ea 70%, transparent);
+    color: #fff8ea;
+    padding-left: 0.1rem;
+  }
+
+  .sp__reel-btn:hover .sp__reel-play {
+    background-color: #e2572b;
+    border-color: #e2572b;
+  }
+
+  .sp__reel-title {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    padding: 1.9rem 0.6rem 0.5rem;
+    text-align: left;
+    font-family: var(--sp-body);
+    font-weight: 700;
+    font-size: var(--text-step--1);
+    line-height: 1.25;
+    color: #fff8ea;
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, #17120f 85%, transparent),
+      transparent
+    );
+  }
+
+  /* -- Screenshots, zone, mini walls ------------------------------------- */
+  .sp__shots {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+  }
+
+  .sp__shot,
+  .sp__zone {
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .sp__shot-img,
+  .sp__zone-img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .sp__zone {
+    max-width: 34rem;
+  }
+
+  .sp__zone-btn {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    line-height: 0;
+  }
+
+  .sp__zone-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 999px;
+    background-color: color-mix(in srgb, #17120f 55%, transparent);
+    border: 2px solid #fff8ea;
+    color: #fff8ea;
+    padding-left: 0.15rem;
+  }
+
+  .sp__zone-btn:hover .sp__zone-play {
+    background-color: #e2572b;
+    border-color: #e2572b;
+  }
+
+  .sp__zone-cap {
+    padding: 0.6rem 0.8rem 0.7rem;
+  }
+
+  .sp__mini {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(0.5rem, 1.2vw, 0.9rem);
+    margin-top: clamp(1.25rem, 3vh, 1.75rem);
+  }
+
+  .sp__mini-cell {
+    margin: 0;
+    overflow: hidden;
+    /* Emails are thousands of pixels tall. A fixed frame anchored to the top
+       crops to the masthead, which is the part that identifies the send. */
+    aspect-ratio: 4 / 5;
+  }
+
+  .sp__mini-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  /* -- Flows ------------------------------------------------------------- */
+  .sp__flows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-block-start: 2px dashed color-mix(in srgb, #7c756a 60%, transparent);
+  }
+
+  .sp__flow {
+    display: grid;
+    grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr);
+    gap: 1rem;
+    padding-block: 0.7rem;
+    border-block-end: 2px dashed color-mix(in srgb, #7c756a 60%, transparent);
+  }
+
+  .sp__flow-name {
+    font-weight: 900;
+  }
+
+  .sp__flow-detail {
+    color: #7c756a;
+  }
+
+  /* -- Buttons ----------------------------------------------------------- */
+  .sp__cta-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: clamp(1.25rem, 3vh, 1.75rem) 0 0;
+  }
+
+  .sp__cta-line--centre {
+    justify-content: center;
+  }
+
+  .sp__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.7em 1.2em;
+    font-family: var(--sp-body);
+    font-weight: 900;
+    font-size: var(--text-step-0);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    color: #fff8ea;
+    background-color: #a0290b;
+    border: 3px solid #17120f;
+    border-radius: 999px;
+    transition:
+      background-color 220ms var(--ease-settle),
+      transform 220ms var(--ease-settle);
+  }
+
+  .sp__btn:hover,
+  .sp__btn:focus-visible {
+    background-color: #e2572b;
+    transform: translateY(-2px);
+  }
+
+  .sp__btn--ghost {
+    background-color: transparent;
+    color: #a0290b;
+  }
+
+  .sp__btn--ghost:hover {
+    background-color: #a0290b;
+    color: #fff8ea;
+  }
+
+  .sp__btn--invert {
+    background-color: #fff8ea;
+    color: #a0290b;
+  }
+
+  .sp__btn--invert:hover {
+    background-color: #eda778;
+    color: #17120f;
+  }
+
+  /* -- Closing band ------------------------------------------------------ */
+  .sp__close {
+    padding: clamp(2rem, 6vw, 3.5rem) var(--spacing-gutter);
+    text-align: center;
+  }
+
+  /* Jelly Choco, per the brief: headlines in the marker face, sentence case,
+     and no punctuation anywhere in the string because the cut has none. On the
+     oxblood band it takes panel cream rather than the deep red the face
+     normally carries, which is 2.8:1 here. */
+  .sp__close-h {
+    font-size: clamp(1.9rem, 5.5vw, 3.6rem);
+    color: #fff8ea;
+    line-height: 1.1;
+  }
+
+  .sp__socials {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: clamp(1rem, 3vw, 1.5rem) 0 0;
+    font-weight: 700;
+  }
+
+  /* -- Narrow ------------------------------------------------------------ */
+  @media (max-width: 900px) {
+    .sp__reels,
+    .sp__mini {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 620px) {
+    .sp__reels,
+    .sp__mini {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sp__shots {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sp__flow {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.15rem;
+    }
+
+    .sp__lede {
+      font-size: var(--text-step-1);
+    }
+  }
+</style>
